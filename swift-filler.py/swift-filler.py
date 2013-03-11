@@ -52,6 +52,7 @@ a_tenant = 'admin'
 swift_operator_role = 'Member'
 ##
 
+concurrency = 20
 default_user_password = 'password'
 default_user_email = 'johndoe@domain.com'
 index_path = '/tmp/swift_filler_index.pkl'
@@ -96,7 +97,10 @@ def create_swift_account(account_amount, user_amount, index=None):
         return account, account_id, r
     created = {}
     # Spawn a greenlet for each account
+    i = 0
     for i in range(account_amount):
+        i += 1
+        print "[Keystone Start OPs %s/%s]" % (i, account_amount)
         pile.spawn(_create_account, user_amount)
     for account, account_id, ret in pile:
         index[(account, account_id)] = ret
@@ -184,7 +188,10 @@ def fill_swift(created_account, c_amount, o_amount, fmax, index_containers=None)
         # Use the first user we find for fill in the swift account
         create_containers(cnx, acc, c_amount, index_containers)
         create_objects(cnx, acc, o_amount, fmax, index_containers)
+    i = 0
     for acc, users in created_account.items():
+        i += 1
+        print "[Start Swift Account OPs %s/%s]" % (i, len(created_account.keys()))
         pool.spawn_n(_fill_swift_job,
                      acc, users,
                      c_amount, o_amount,
@@ -240,8 +247,8 @@ if __name__ == '__main__':
                         help='Specify the MAX file size. Files will be from 1024 Bytes to MAX Bytes')
     args = parser.parse_args()
 
-    pile = eventlet.GreenPile(20)
-    pool = eventlet.GreenPool(20)
+    pile = eventlet.GreenPile(concurrency)
+    pool = eventlet.GreenPool(concurrency)
 
     c = client.Client(username=a_username,
                       password=a_password,
