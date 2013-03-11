@@ -4,12 +4,12 @@
 # This script aims to fill in a swift cluster with random
 # data.
 # A custom amount of account will be created against keystone
-# then many containers and object will be pushed to that account.
-# Accounts and objects will be flavored with some meta data.
+# then many containers and objects will be pushed to those accounts.
+# Accounts and objects will be flavored with some random meta data.
 #
-# Two index will be pickled to FS to store first which account has been
+# Two indexes will be pickled to FS to store first which accounts has been
 # created (index_path) and second which containers/objects + MD5 and meta data
-# has been stored.
+# has been stored (index_containers_path).
 #
 # This script use eventlet to try to speedup the most
 # the fill in process.
