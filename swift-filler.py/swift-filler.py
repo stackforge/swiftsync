@@ -279,7 +279,7 @@ if __name__ == '__main__':
             fmax = 1024
         else:
             if args.s.isdigit():
-                fmax = int(args.s)
+                fmax = max(1024, int(args.s))
             else:
                 fmax = 1024
         created = create_swift_account(int(args.a), int(args.u), index=index)
