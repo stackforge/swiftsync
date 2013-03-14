@@ -147,26 +147,35 @@ def swift_cnx(acc, user):
 
 def create_objects(cnx, acc, o_amount, fmax, index_containers):
 
-    def _generate_object(f_object, size):
-        size = random.randint(1024, size)
-        end = get_rand_str('file_end_')
-        f_object.seek(size - len(end))
-        f_object.write(end)
-        f_object.seek(0)
+    def _generate_object(f_object, size, zero_byte=False):
+        if not zero_byte:
+            size = random.randint(1024, size)
+            end = get_rand_str('file_end_')
+            f_object.seek(size - len(end))
+            f_object.write(end)
+            f_object.seek(0)
+        else:
+            f_object.seek(0)
     containers_d = index_containers[acc]
     for container, details in containers_d.items():
         for i in range(o_amount):
             print "Put data for container %s" % container
             f_object = StringIO()
-            _generate_object(f_object, fmax)
+            if not i and o_amount > 1:
+                # Generate an empty object in each container whether
+                # we create more than one object
+                _generate_object(f_object, fmax, zero_byte=True)
+            else:
+                _generate_object(f_object, fmax)
             object_name = get_rand_str('file_name_')
             meta_keys = map(get_rand_str, ('X-Object-Meta-',) * 3)
             meta_values = map(get_rand_str, ('meta_v_',) * 3)
             meta = dict(zip(meta_keys, meta_values))
+            data = f_object.read()
             etag = cnx.put_object(container, object_name,
-                              f_object.read(), headers=copy(meta))
+                              data, headers=copy(meta))
             f_object.close()
-            obj_info = {'object_info': (object_name, etag), 'meta': meta}
+            obj_info = {'object_info': (object_name, etag, len(data)), 'meta': meta}
             containers_d[container]['objects'].append(obj_info)
 
 
