@@ -72,7 +72,7 @@ def customize(bstr, mdl):
     if mdl == 0:
         return bstr
     elif mdl == 1:
-        return "s "+bstr+" s"
+        return bstr+" s"
     elif mdl == 2:
         return unicode(bstr, 'utf8') + u'_' + u"".\
             join([random.choice(ucodes) for i in range(3)])
@@ -199,9 +199,15 @@ def create_objects(cnx, acc, o_amount, fmax, index_containers):
 def create_containers(cnx, acc, c_amount, index_containers=None):
     containers_d = index_containers.setdefault(acc, {})
     for i in range(c_amount):
-        container_name = get_rand_str('container_')
+        container_name = customize(get_rand_str('container_'), i%3)
+        # Got some errors when triying to reach container with space
+        # in their name.
+#        meta_keys = [customize(m, (i+1)%3) for m in
+#                     map(get_rand_str, ('X-Container-Meta-',) * 3)]
         meta_keys = map(get_rand_str, ('X-Container-Meta-',) * 3)
-        meta_values = map(get_rand_str, ('meta_v_',) * 3)
+#        meta_values = map(get_rand_str, ('meta_v_',) * 3)
+        meta_values = [customize(m, (i+1)%3) for m in
+                       map(get_rand_str, ('meta_v_',) * 3)]
         meta = dict(zip(meta_keys, meta_values))
         print "Create container %s" % container_name
         cnx.put_container(container_name, headers=copy(meta))
