@@ -47,7 +47,7 @@ eventlet.patcher.monkey_patch()
 # Need to adapt for your configuration #
 a_username = 'admin'
 a_password = 'wxcvbn'
-auth_url = 'http://127.0.0.1:5000/v2.0'
+auth_url = os.environ['OS_AUTH_URL']
 a_tenant = 'admin'
 swift_operator_role = 'Member'
 ##
