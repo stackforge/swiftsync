@@ -58,12 +58,26 @@ default_user_email = 'johndoe@domain.com'
 index_path = '/tmp/swift_filler_index.pkl'
 index_containers_path = '/tmp/swift_filler_containers_index.pkl'
 
+# Some unicode codepoint
+ucodes = (u'\u00b5', u'\u00c6', u'\u0159', u'\u0267',
+          u'\u02b6', u'\u0370', u'\u038F', u'\u03EA',
+          u'\u046A')
 
 def get_rand_str(mode='user'):
     prefix = "%s" % mode
     return prefix + ''.join(random.choice( \
                 string.ascii_uppercase + string.digits) for x in range(8))
 
+def customize(bstr, mdl):
+    if mdl == 0:
+        return bstr
+    elif mdl == 1:
+        return "s "+bstr+" s"
+    elif mdl == 2:
+        return unicode(bstr, 'utf8') + u'_' + u"".\
+            join([random.choice(ucodes) for i in range(3)])
+    else:
+        return bstr
 
 def create_swift_user(account_name, account_id, user_amount):
     users = []
@@ -167,7 +181,8 @@ def create_objects(cnx, acc, o_amount, fmax, index_containers):
                 _generate_object(f_object, fmax, zero_byte=True)
             else:
                 _generate_object(f_object, fmax)
-            object_name = get_rand_str('file_name_')
+                # Customize filename
+            object_name = customize(get_rand_str('file_name_'), i%3)
             meta_keys = map(get_rand_str, ('X-Object-Meta-',) * 3)
             meta_values = map(get_rand_str, ('meta_v_',) * 3)
             meta = dict(zip(meta_keys, meta_values))
