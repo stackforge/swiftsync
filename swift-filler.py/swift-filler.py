@@ -183,8 +183,10 @@ def create_objects(cnx, acc, o_amount, fmax, index_containers):
                 _generate_object(f_object, fmax)
                 # Customize filename
             object_name = customize(get_rand_str('file_name_'), i%3)
-            meta_keys = map(get_rand_str, ('X-Object-Meta-',) * 3)
-            meta_values = map(get_rand_str, ('meta_v_',) * 3)
+            meta_keys = [customize(m, (i+1)%3) for m in
+                         map(get_rand_str, ('X-Object-Meta-',) * 3)]
+            meta_values = [customize(m, (i+1)%3) for m in
+                         map(get_rand_str, ('meta_v_',) * 3)]
             meta = dict(zip(meta_keys, meta_values))
             data = f_object.read()
             etag = cnx.put_object(container, object_name,
