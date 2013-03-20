@@ -62,7 +62,6 @@ def main():
         password=password,
         tenant_name=tenant_name)
 
-
     index_path = get_config('filler', 'index_path')
     index_containers_path = get_config('filler', 'index_containers_path')
 
