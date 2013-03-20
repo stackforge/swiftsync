@@ -6,7 +6,7 @@ import argparse
 import sys
 
 import eventlet
-from keystoneclient.v2_0 import ksclient
+from keystoneclient.v2_0 import client as ksclient
 
 sys.path.append("../")
 from common.utils import get_config
