@@ -51,21 +51,24 @@ ucodes = (u'\u00b5', u'\u00c6', u'\u0159', u'\u0267',
           u'\u02b6', u'\u0370', u'\u038F', u'\u03EA',
           u'\u046A')
 
+
 def get_rand_str(mode='user'):
     prefix = "%s" % mode
     return prefix + ''.join(random.choice(
         string.ascii_uppercase + string.digits) for x in range(8))
 
+
 def customize(bstr, mdl):
     if mdl == 0:
         return bstr
     elif mdl == 1:
-        return bstr+" s"
+        return bstr + " s"
     elif mdl == 2:
         return unicode(bstr, 'utf8') + u'_' + u"".\
             join([random.choice(ucodes) for i in range(3)])
     else:
         return bstr
+
 
 def create_swift_user(client, account_name, account_id, user_amount):
     users = []
@@ -176,10 +179,10 @@ def create_objects(cnx, acc, o_amount, fmax, index_containers):
             else:
                 _generate_object(f_object, fmax)
                 # Customize filename
-            object_name = customize(get_rand_str('file_name_'), i%3)
-            meta_keys = [customize(m, (i+1)%3) for m in
+            object_name = customize(get_rand_str('file_name_'), i % 3)
+            meta_keys = [customize(m, (i + 1) % 3) for m in
                          map(get_rand_str, ('X-Object-Meta-',) * 3)]
-            meta_values = [customize(m, (i+1)%3) for m in
+            meta_values = [customize(m, (i + 1) % 3) for m in
                          map(get_rand_str, ('meta_v_',) * 3)]
             meta = dict(zip(meta_keys, meta_values))
             data = f_object.read()
@@ -194,14 +197,14 @@ def create_objects(cnx, acc, o_amount, fmax, index_containers):
 def create_containers(cnx, acc, c_amount, index_containers=None):
     containers_d = index_containers.setdefault(acc, {})
     for i in range(c_amount):
-        container_name = customize(get_rand_str('container_'), i%3)
+        container_name = customize(get_rand_str('container_'), i % 3)
         # Got some errors when triying to reach container with space
         # in their name.
 #        meta_keys = [customize(m, (i+1)%3) for m in
 #                     map(get_rand_str, ('X-Container-Meta-',) * 3)]
         meta_keys = map(get_rand_str, ('X-Container-Meta-',) * 3)
 #        meta_values = map(get_rand_str, ('meta_v_',) * 3)
-        meta_values = [customize(m, (i+1)%3) for m in
+        meta_values = [customize(m, (i + 1) % 3) for m in
                        map(get_rand_str, ('meta_v_',) * 3)]
         meta = dict(zip(meta_keys, meta_values))
         print "Create container %s" % container_name
