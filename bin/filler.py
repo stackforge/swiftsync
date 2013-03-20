@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 
 # -*- encoding: utf-8 -*-
-import pickle
 import argparse
+import os
+import pickle
 import sys
 
 import eventlet
 from keystoneclient.v2_0 import client as ksclient
 
 sys.path.append("../")
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from common.utils import get_config
 from sync.filler import (load_index, load_containers_index,
                          create_swift_account, fill_swift,
@@ -44,10 +46,14 @@ def main():
     pile = eventlet.GreenPile(concurrency)
     pool = eventlet.GreenPool(concurrency)
 
-    client = ksclient.Client(username=get_config('filler', 'a_username'),
-                             password=get_config('filler', 'a_password'),
-                             auth_url=get_config('filler', 'auth_url'),
-                             tenant_name=get_config('filler', 'a_tenant'))
+    _config = get_config('auth',
+                         'keystone_origin_admin_credentials').split(':')
+    tenant_name, username, password = _config
+    client = ksclient.Client(
+        auth_url=get_config('auth', 'keystone_origin'),
+        username=username,
+        password=password,
+        tenant_name=tenant_name)
 
     if not args.create and not args.delete:
         parser.print_help()

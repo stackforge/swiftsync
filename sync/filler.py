@@ -148,7 +148,7 @@ def delete_account(client, user_id, acc):
 
 
 def swift_cnx(acc, user):
-    cnx = sclient.Connection(get_config('filler', 'auth_url'),
+    cnx = sclient.Connection(get_config('auth', 'keystone_origin'),
                             user=user,
                             key=get_config('filler', 'default_user_password'),
                             tenant_name=acc[0],
