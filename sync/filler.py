@@ -29,7 +29,7 @@
 
 import os
 import sys
-import argparse
+
 import pickle
 import random
 import string
@@ -37,26 +37,15 @@ import string
 from StringIO import StringIO
 from copy import copy
 
-from keystoneclient.v2_0 import client
 from swiftclient import client as sclient
 
 import eventlet
 
+sys.path.append("../")
+from common.utils import get_config
+
+
 eventlet.patcher.monkey_patch()
-
-# Need to adapt for your configuration #
-a_username = 'admin'
-a_password = 'wxcvbn'
-auth_url = 'http://127.0.0.1:5000/v2.0'
-a_tenant = 'admin'
-swift_operator_role = 'Member'
-##
-
-concurrency = 20
-default_user_password = 'password'
-default_user_email = 'johndoe@domain.com'
-index_path = '/tmp/swift_filler_index.pkl'
-index_containers_path = '/tmp/swift_filler_containers_index.pkl'
 
 
 def get_rand_str(mode='user'):
@@ -65,19 +54,22 @@ def get_rand_str(mode='user'):
         string.ascii_uppercase + string.digits) for x in range(8))
 
 
-def create_swift_user(account_name, account_id, user_amount):
+def create_swift_user(client, account_name, account_id, user_amount):
     users = []
 
     def _create_user(account_name, account_id):
         user = get_rand_str(mode='user_')
         # Create a user in that tenant
-        uid = c.users.create(user, default_user_password,
-                             default_user_email, account_id)
+        uid = client.users.create(user,
+                             get_config('filler', 'default_user_password'),
+                             get_config('filler', 'default_user_email'),
+                             account_id)
         # Get swift_operator_role id
-        roleid = [role.id for role in c.roles.list()
-                  if role.name == swift_operator_role][0]
+        roleid = [role.id for role in client.roles.list()
+                  if role.name == get_config('filler', 'swift_operator_role')]
+        roleid = roleid[0]
         # Add tenant/user in swift operator role/group
-        c.roles.add_user_role(uid.id, roleid, account_id)
+        client.roles.add_user_role(uid.id, roleid, account_id)
         return (user, uid.id, roleid)
     for i in range(user_amount):
         ret = _create_user(account_name, account_id)
@@ -85,14 +77,16 @@ def create_swift_user(account_name, account_id, user_amount):
     return users
 
 
-def create_swift_account(account_amount, user_amount, index=None):
+def create_swift_account(client, pile,
+                         account_amount, user_amount,
+                         index=None):
 
     def _create_account(user_amount):
         account = get_rand_str(mode='account_')
         # Create a tenant. In swift this is an account
-        account_id = c.tenants.create(account).id
+        account_id = client.tenants.create(account).id
         print 'Account created %s' % account
-        r = create_swift_user(account, account_id, user_amount)
+        r = create_swift_user(client, account, account_id, user_amount)
         print 'Users created %s in account %s' % (str(r), account)
         return account, account_id, r
     created = {}
@@ -126,21 +120,21 @@ def delete_account_content(acc, user):
             cnx.delete_object(container, obj)
 
 
-def delete_account(user_id, acc):
+def delete_account(client, user_id, acc):
     account_id = acc[1]
     if not isinstance(user_id, list):
         user_id = (user_id)
     for uid in user_id:
         print "Delete user with id : %s" % uid
-        c.users.delete(uid)
+        client.users.delete(uid)
     print "Delete account %s" % account_id
-    c.tenants.delete(account_id)
+    client.tenants.delete(account_id)
 
 
 def swift_cnx(acc, user):
-    cnx = sclient.Connection(auth_url,
+    cnx = sclient.Connection(get_config('filler', 'auth_url'),
                             user=user,
-                            key=default_user_password,
+                            key=get_config('filler', 'default_user_password'),
                             tenant_name=acc[0],
                             auth_version=2)
     return cnx
@@ -193,7 +187,7 @@ def create_containers(cnx, acc, c_amount, index_containers=None):
         containers_d[container_name] = {'meta': meta, 'objects': []}
 
 
-def fill_swift(created_account, c_amount,
+def fill_swift(pool, created_account, c_amount,
                o_amount, fmax, index_containers=None):
     def _fill_swift_job(acc, users, c_amount,
                         o_amount, fmax, index_containers):
@@ -214,6 +208,7 @@ def fill_swift(created_account, c_amount,
 
 
 def load_index():
+    index_path = get_config('filler', 'index_path')
     if os.path.isfile(index_path):
         try:
             index = pickle.load(file(index_path))
@@ -226,6 +221,7 @@ def load_index():
 
 
 def load_containers_index():
+    index_containers_path = get_config('filler', 'index_containers_path')
     if os.path.isfile(index_containers_path):
         try:
             index = pickle.load(file(index_containers_path))
@@ -235,86 +231,3 @@ def load_containers_index():
     else:
         index = {}
     return index
-
-
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser(prog='swift-filler', add_help=True)
-    parser.add_argument('--delete',
-                        action='store_true',
-                        help='Suppress created accounts/users')
-    parser.add_argument('--create',
-                        action='store_true',
-                        help='Create account/users/containers/data')
-    parser.add_argument('-l',
-                        action='store_true',
-                        help='Load previous indexes and append newly'
-                        ' created to it')
-    parser.add_argument('-a',
-                        help='Specify account amount')
-    parser.add_argument('-u',
-                        help='Specify user amount by account')
-    parser.add_argument('-c',
-                        help='Specify container amount by account')
-    parser.add_argument('-f',
-                        help='Specify file amount by account')
-    parser.add_argument('-s',
-                        help='Specify the MAX file size. Files '
-                        'will be from 1024 Bytes to MAX Bytes')
-    args = parser.parse_args()
-
-    pile = eventlet.GreenPile(concurrency)
-    pool = eventlet.GreenPool(concurrency)
-
-    c = client.Client(username=a_username,
-                      password=a_password,
-                      auth_url=auth_url,
-                      tenant_name=a_tenant)
-
-    if not args.create and not args.delete:
-        parser.print_help()
-        sys.exit(1)
-    if args.create and args.delete:
-        parser.print_help()
-        sys.exit(1)
-
-    if args.l:
-        index = load_index()
-        index_containers = load_containers_index()
-    else:
-        index = {}
-        index_containers = {}
-    if args.create:
-        if args.a is None or not args.a.isdigit():
-            print("Provide account amount by setting '-a' option")
-            sys.exit(1)
-        if args.u is None or not args.u.isdigit():
-            print("Provide user by account amount by setting '-u' option")
-            sys.exit(1)
-        if args.s is None:
-            fmax = 1024
-        else:
-            if args.s.isdigit():
-                fmax = max(1024, int(args.s))
-            else:
-                fmax = 1024
-        created = create_swift_account(int(args.a), int(args.u), index=index)
-        if args.f is not None and args.c is not None:
-            if args.f.isdigit() and args.c.isdigit():
-                fill_swift(created, int(args.c),
-                           int(args.f), fmax,
-                           index_containers=index_containers)
-            else:
-                print("'-c' and '-f' options must be integers")
-                sys.exit(1)
-        pickle.dump(index, file(index_path, 'w'))
-        pickle.dump(index_containers, file(index_containers_path, 'w'))
-    if args.delete:
-        index = load_index()
-        for k, v in index.items():
-            user_info_list = [user[1] for user in v]
-            # Take the first user we find
-            delete_account_content(k, v[0])
-            delete_account(user_info_list, k)
-            del index[k]
-        pickle.dump(index, file(index_path, 'w'))
