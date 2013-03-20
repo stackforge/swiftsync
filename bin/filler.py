@@ -9,7 +9,6 @@ import sys
 import eventlet
 from keystoneclient.v2_0 import client as ksclient
 
-sys.path.append("../")
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from common.utils import get_config
 from sync.filler import (load_index, load_containers_index,

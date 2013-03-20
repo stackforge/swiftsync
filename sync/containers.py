@@ -1,5 +1,3 @@
-import sys
-
 import swiftclient
 import eventlet
 
@@ -28,7 +26,6 @@ def sync_container(orig_storage_cnx, orig_storage_url,
         swiftclient.put_container(url,
             dest_token, container_name,
             headers=container_headers)
-
 
     dest_container_stats, dest_objects = swiftclient.get_container(
         None, dest_token, container_name, http_conn=dest_storage_cnx,
