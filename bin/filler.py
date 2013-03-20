@@ -42,6 +42,13 @@ def main():
                         'will be from 1024 Bytes to MAX Bytes')
     args = parser.parse_args()
 
+    if not args.create and not args.delete:
+        parser.print_help()
+        sys.exit(1)
+    if args.create and args.delete:
+        parser.print_help()
+        sys.exit(1)
+
     concurrency = int(get_config('filler', 'concurrency'))
     pile = eventlet.GreenPile(concurrency)
     pool = eventlet.GreenPool(concurrency)
@@ -54,13 +61,6 @@ def main():
         username=username,
         password=password,
         tenant_name=tenant_name)
-
-    if not args.create and not args.delete:
-        parser.print_help()
-        sys.exit(1)
-    if args.create and args.delete:
-        parser.print_help()
-        sys.exit(1)
 
     if args.l:
         index = load_index()
