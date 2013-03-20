@@ -61,8 +61,8 @@ index_containers_path = '/tmp/swift_filler_containers_index.pkl'
 
 def get_rand_str(mode='user'):
     prefix = "%s" % mode
-    return prefix + ''.join(random.choice( \
-                string.ascii_uppercase + string.digits) for x in range(8))
+    return prefix + ''.join(random.choice(
+        string.ascii_uppercase + string.digits) for x in range(8))
 
 
 def create_swift_user(account_name, account_id, user_amount):
@@ -75,7 +75,7 @@ def create_swift_user(account_name, account_id, user_amount):
                              default_user_email, account_id)
         # Get swift_operator_role id
         roleid = [role.id for role in c.roles.list()
-                    if role.name == swift_operator_role][0]
+                  if role.name == swift_operator_role][0]
         # Add tenant/user in swift operator role/group
         c.roles.add_user_role(uid.id, roleid, account_id)
         return (user, uid.id, roleid)
@@ -117,11 +117,12 @@ def delete_account_content(acc, user):
     # Retreive object list
     for container in containers_name:
         container_infos = cnx.get_container(container)
-        object_names = [obj_detail['name'] for obj_detail in container_infos[1]]
+        object_names = [obj_detail['name'] for obj_detail
+                        in container_infos[1]]
         # Delete objects
         for obj in object_names:
-            print "Deleting object %s in container %s for account %s" \
-                    % (obj, container, str(acc))
+            print "Deleting object %s in container %s for account %s" % (
+                obj, container, str(acc))
             cnx.delete_object(container, obj)
 
 
@@ -175,7 +176,8 @@ def create_objects(cnx, acc, o_amount, fmax, index_containers):
             etag = cnx.put_object(container, object_name,
                               data, headers=copy(meta))
             f_object.close()
-            obj_info = {'object_info': (object_name, etag, len(data)), 'meta': meta}
+            obj_info = {'object_info':
+                        (object_name, etag, len(data)), 'meta': meta}
             containers_d[container]['objects'].append(obj_info)
 
 
@@ -191,8 +193,10 @@ def create_containers(cnx, acc, c_amount, index_containers=None):
         containers_d[container_name] = {'meta': meta, 'objects': []}
 
 
-def fill_swift(created_account, c_amount, o_amount, fmax, index_containers=None):
-    def _fill_swift_job(acc, users, c_amount, o_amount, fmax, index_containers):
+def fill_swift(created_account, c_amount,
+               o_amount, fmax, index_containers=None):
+    def _fill_swift_job(acc, users, c_amount,
+                        o_amount, fmax, index_containers):
         cnx = swift_cnx(acc, users[0][0])
         # Use the first user we find for fill in the swift account
         create_containers(cnx, acc, c_amount, index_containers)
@@ -200,7 +204,8 @@ def fill_swift(created_account, c_amount, o_amount, fmax, index_containers=None)
     i = 0
     for acc, users in created_account.items():
         i += 1
-        print "[Start Swift Account OPs %s/%s]" % (i, len(created_account.keys()))
+        print "[Start Swift Account OPs %s/%s]" % \
+            (i, len(created_account.keys()))
         pool.spawn_n(_fill_swift_job,
                      acc, users,
                      c_amount, o_amount,
@@ -243,7 +248,8 @@ if __name__ == '__main__':
                         help='Create account/users/containers/data')
     parser.add_argument('-l',
                         action='store_true',
-                        help='Load previous indexes and append newly created to it')
+                        help='Load previous indexes and append newly'
+                        ' created to it')
     parser.add_argument('-a',
                         help='Specify account amount')
     parser.add_argument('-u',
@@ -253,7 +259,8 @@ if __name__ == '__main__':
     parser.add_argument('-f',
                         help='Specify file amount by account')
     parser.add_argument('-s',
-                        help='Specify the MAX file size. Files will be from 1024 Bytes to MAX Bytes')
+                        help='Specify the MAX file size. Files '
+                        'will be from 1024 Bytes to MAX Bytes')
     args = parser.parse_args()
 
     pile = eventlet.GreenPile(concurrency)
@@ -295,7 +302,8 @@ if __name__ == '__main__':
         if args.f is not None and args.c is not None:
             if args.f.isdigit() and args.c.isdigit():
                 fill_swift(created, int(args.c),
-                           int(args.f), fmax, index_containers=index_containers)
+                           int(args.f), fmax,
+                           index_containers=index_containers)
             else:
                 print("'-c' and '-f' options must be integers")
                 sys.exit(1)
