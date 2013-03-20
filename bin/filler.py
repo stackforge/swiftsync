@@ -62,6 +62,10 @@ def main():
         password=password,
         tenant_name=tenant_name)
 
+
+    index_path = get_config('filler', 'index_path')
+    index_containers_path = get_config('filler', 'index_containers_path')
+
     if args.l:
         index = load_index()
         index_containers = load_containers_index()
@@ -93,19 +97,20 @@ def main():
             else:
                 print("'-c' and '-f' options must be integers")
                 sys.exit(1)
-        index_path = get_config('filler', 'index_path')
-        index_containers_path = get_config('filler', 'index_containers_path')
-        pickle.dump(index, file(index_path, 'w'))
-        pickle.dump(index_containers, file(index_containers_path, 'w'))
+        pickle.dump(index, open(index_path, 'w'))
+        pickle.dump(index_containers, open(index_containers_path, 'w'))
     if args.delete:
         index = load_index()
         for k, v in index.items():
             user_info_list = [user[1] for user in v]
             # Take the first user we find
-            delete_account_content(client, k, v[0])
+            delete_account_content(k, v[0])
             delete_account(client, user_info_list, k)
             del index[k]
-        pickle.dump(index, file(index_path, 'w'))
+        if not os.path.exists(index_path):
+            print "No index_path to load."
+            sys.exit(1)
+        pickle.dump(index, open(index_path, 'w'))
 
 if __name__ == '__main__':
     main()
