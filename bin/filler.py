@@ -40,7 +40,7 @@ def main():
                         'will be from 1024 Bytes to MAX Bytes')
     args = parser.parse_args()
 
-    concurrency = get_config('filler', 'concurrency')
+    concurrency = int(get_config('filler', 'concurrency'))
     pile = eventlet.GreenPile(concurrency)
     pool = eventlet.GreenPool(concurrency)
 
