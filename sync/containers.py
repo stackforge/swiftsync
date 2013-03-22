@@ -2,6 +2,9 @@ import swiftclient
 import eventlet
 
 from sync.objects import sync_object
+from common.utils import get_config
+
+MAX_GTHREADS = get_config("sync", "max_gthreads")
 
 
 def sync_container(orig_storage_cnx, orig_storage_url,
@@ -38,18 +41,21 @@ def sync_container(orig_storage_cnx, orig_storage_url,
         return
 
     pool = eventlet.GreenPool()
-    cnt = 0
+
+    count = 0
+    pile = eventlet.GreenPile(pool)
     for obj in diff:
-        pool.spawn_n(sync_object,
-                     orig_storage_url,
-                     orig_token,
-                     dest_storage_url,
-                     dest_token, container_name,
-                     obj)
-        if cnt == 20:
+        pile.spawn(sync_object,
+                   orig_storage_url,
+                   orig_token,
+                   dest_storage_url,
+                   dest_token, container_name,
+                   obj)
+        if count == MAX_GTHREADS:
             pool.waitall()
-            cnt = 0
+            pile = eventlet.GreenPile(pool)
+            count = 0
         else:
-            cnt += 1
+            count += 1
 
     pool.waitall()
