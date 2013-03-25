@@ -41,7 +41,7 @@ def sync_an_account(orig_storage_url,
         None, orig_token, http_conn=orig_storage_cnx, full_listing=True)
 
     for container in orig_containers:
-        print container,
+        print container
         dt1 = datetime.datetime.fromtimestamp(time.time())
         sync_container(orig_storage_cnx, orig_storage_url, orig_token,
                        dest_storage_cnx, dest_storage_url, dest_token,
@@ -51,6 +51,7 @@ def sync_an_account(orig_storage_url,
         rd = dateutil.relativedelta.relativedelta(dt2, dt1)
         print "%d hours, %d minutes and %d seconds" % (rd.hours, rd.minutes,
                                                        rd.seconds)
+        print
 
 
 def sync_accounts():

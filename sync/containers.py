@@ -1,6 +1,10 @@
+import sys
+import os
+
 import swiftclient
 import eventlet
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from sync.objects import sync_object
 from common.utils import get_config
 
@@ -34,28 +38,21 @@ def sync_container(orig_storage_cnx, orig_storage_url,
         None, dest_token, container_name, http_conn=dest_storage_cnx,
     )
 
-    set1 = set((x['hash'], x['name']) for x in orig_objects)
-    set2 = set((x['hash'], x['name']) for x in dest_objects)
+    set1 = set((x['last_modified'], x['name']) for x in orig_objects)
+    set2 = set((x['last_modified'], x['name']) for x in dest_objects)
+
     diff = set1 - set2
     if not diff:
         return
 
-    pool = eventlet.GreenPool()
-
-    count = 0
+    pool = eventlet.GreenPool(size=int(MAX_GTHREADS))
     pile = eventlet.GreenPile(pool)
     for obj in diff:
+        print obj
         pile.spawn(sync_object,
                    orig_storage_url,
                    orig_token,
                    dest_storage_url,
                    dest_token, container_name,
                    obj)
-        if count == MAX_GTHREADS:
-            pool.waitall()
-            pile = eventlet.GreenPile(pool)
-            count = 0
-        else:
-            count += 1
-
     pool.waitall()
