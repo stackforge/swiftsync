@@ -1,9 +1,12 @@
 # -*- encoding: utf-8 -*-
+import datetime
 import os
 import sys
+import time
 
-import swiftclient
 from keystoneclient.v2_0 import client as ksclient
+import dateutil.relativedelta
+import swiftclient
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from common.utils import get_config, get_auth
@@ -38,10 +41,16 @@ def sync_an_account(orig_storage_url,
         None, orig_token, http_conn=orig_storage_cnx, full_listing=True)
 
     for container in orig_containers:
-        print "Synching %s.." % (container)
+        print container,
+        dt1 = datetime.datetime.fromtimestamp(time.time())
         sync_container(orig_storage_cnx, orig_storage_url, orig_token,
                        dest_storage_cnx, dest_storage_url, dest_token,
                        container['name'])
+
+        dt2 = datetime.datetime.fromtimestamp(time.time())
+        rd = dateutil.relativedelta.relativedelta(dt2, dt1)
+        print "%d hours, %d minutes and %d seconds" % (rd.hours, rd.minutes,
+                                                       rd.seconds)
 
 
 def sync_accounts():
@@ -69,3 +78,6 @@ def sync_accounts():
                         orig_admin_token,
                         user_dst_st_url,
                         dest_admin_token)
+
+if __name__ == '__main__':
+    sync_accounts()
