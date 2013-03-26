@@ -22,7 +22,7 @@ import dateutil.relativedelta
 import keystoneclient.v2_0.client
 
 from utils import get_config
-from containers import sync_container
+import containers
 
 
 class Accounts(object):
@@ -60,15 +60,16 @@ class Accounts(object):
                                     http_conn=orig_storage_cnx,
                                     full_listing=True))
 
+        container_cls = containers.Containers()
         for container in orig_containers:
             print container
             dt1 = datetime.datetime.fromtimestamp(time.time())
-            sync_container(orig_storage_cnx,
-                           orig_storage_url,
-                           orig_token,
-                           dest_storage_cnx,
-                           dest_storage_url, dest_token,
-                           container['name'])
+            container_cls.sync(orig_storage_cnx,
+                               orig_storage_url,
+                               orig_token,
+                               dest_storage_cnx,
+                               dest_storage_url, dest_token,
+                               container['name'])
 
             dt2 = datetime.datetime.fromtimestamp(time.time())
             rd = dateutil.relativedelta.relativedelta(dt2, dt1)

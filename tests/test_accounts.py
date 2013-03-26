@@ -76,10 +76,11 @@ class TestAccount(test_base.TestCase):
     def test_sync_account(self):
         ret = []
 
-        def sync_container(*args, **kwargs):
-            ret.append(args)
+        class Containers(object):
+            def sync(*args, **kwargs):
+                ret.append(args)
 
-        sync.accounts.sync_container = sync_container
+        sync.accounts.containers.Containers = Containers
 
         tenant_name = TENANTS_LIST.keys()[0]
         orig_storage_url = "%s/AUTH_%s" % (STORAGE_ORIG,
@@ -88,6 +89,6 @@ class TestAccount(test_base.TestCase):
                                            TENANTS_LIST[tenant_name]['id'])
         self.accounts_cls.sync_account(orig_storage_url, "otoken",
                                        dest_storage_url, "dtoken")
-        ret_container_list = sorted(x[6] for x in ret)
+        ret_container_list = sorted(x[7] for x in ret)
         default_container_list = sorted(x['name'] for x in CONTAINERS_LIST)
         self.assertEquals(ret_container_list, default_container_list)
