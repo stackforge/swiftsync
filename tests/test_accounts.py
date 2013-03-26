@@ -19,9 +19,9 @@ import swiftclient
 import keystoneclient
 
 import sync.accounts
-from fakes import (FakeSWConnection, TENANTS_LIST,
-                   STORAGE_DEST, FakeKS, CONFIGDICT,
-                   fake_get_config)
+from fakes import FakeSWConnection, TENANTS_LIST, STORAGE_ORIG, \
+    STORAGE_DEST, FakeSWClient, FakeKS, CONFIGDICT, CONTAINERS_LIST, \
+    fake_get_config
 
 
 class TestAccount(unittest2.TestCase):
@@ -31,6 +31,8 @@ class TestAccount(unittest2.TestCase):
 
     def _monkey_patch(self):
         keystoneclient.v2_0.client = FakeKS
+        swiftclient.get_account = FakeSWClient.get_account
+        swiftclient.http_connection = FakeSWClient.http_connection
         swiftclient.client.Connection = FakeSWConnection
         sync.accounts.get_config = fake_get_config
 
@@ -70,4 +72,20 @@ class TestAccount(unittest2.TestCase):
         [self.assertTrue(x[1].startswith(STORAGE_DEST)) for x in ret]
 
     def test_sync_account(self):
-        pass
+        ret = []
+
+        def sync_container(*args, **kwargs):
+            ret.append(args)
+
+        sync.accounts.sync_container = sync_container
+
+        tenant_name = TENANTS_LIST.keys()[0]
+        orig_storage_url = "%s/AUTH_%s" % (STORAGE_ORIG,
+                                           TENANTS_LIST[tenant_name]['id'])
+        dest_storage_url = "%s/AUTH_%s" % (STORAGE_DEST,
+                                           TENANTS_LIST[tenant_name]['id'])
+        self.accounts_cls.sync_account(orig_storage_url, "otoken",
+                                       dest_storage_url, "dtoken")
+        ret_container_list = sorted(x[6] for x in ret)
+        default_container_list = sorted(x['name'] for x in CONTAINERS_LIST)
+        self.assertEquals(ret_container_list, default_container_list)

@@ -55,8 +55,10 @@ class Accounts(object):
         orig_storage_cnx = swiftclient.http_connection(orig_storage_url)
         dest_storage_cnx = swiftclient.http_connection(dest_storage_url)
 
-        orig_account_stats, orig_containers = swiftclient.get_account(
-            None, orig_token, http_conn=orig_storage_cnx, full_listing=True)
+        _, orig_containers = (
+            swiftclient.get_account(None, orig_token,
+                                    http_conn=orig_storage_cnx,
+                                    full_listing=True))
 
         for container in orig_containers:
             print container
