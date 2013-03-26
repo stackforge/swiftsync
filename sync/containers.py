@@ -1,12 +1,8 @@
-import sys
-import os
-
 import swiftclient
 import eventlet
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from sync.objects import sync_object
-from common.utils import get_config
+from objects import sync_object
+from utils import get_config
 
 MAX_GTHREADS = get_config("sync", "max_gthreads")
 
