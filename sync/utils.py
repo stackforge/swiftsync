@@ -42,12 +42,5 @@ def get_config(section, option, default=None):
                                  "section/option: %s/%s" % (section, option))
 
 
-def get_auth(auth_url, tenant, user, password):
-    return swclient.Connection(
-        auth_url,
-        '%s:%s' % (tenant, user),
-        password,
-        auth_version=2).get_auth()
-
 if __name__ == '__main__':
     get_config("foo", "bar")
