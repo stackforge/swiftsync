@@ -17,8 +17,8 @@
 import swiftclient
 import eventlet
 
-from objects import sync_object
-from utils import get_config
+from swsync.objects import sync_object
+from swsync.utils import get_config
 
 
 class Containers(object):

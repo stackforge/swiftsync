@@ -2,7 +2,6 @@
 __author__ = "Chmouel Boudjnah <chmouel@chmouel.com>"
 import os
 import ConfigParser
-import swiftclient.client as swclient
 
 
 CONFIG = {}

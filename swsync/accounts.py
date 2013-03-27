@@ -22,14 +22,14 @@ import dateutil.relativedelta
 import keystoneclient.v2_0.client
 
 from utils import get_config
-import containers
+import swsync.containers
 
 
 class Accounts(object):
     """Process Keystone Accounts."""
     def __init__(self):
         self.keystone_cnx = None
-        self.container_cls = containers.Containers()
+        self.container_cls = swsync.containers.Containers()
 
     def get_swift_auth(self, auth_url, tenant, user, password):
         """Get swift connexion from args"""

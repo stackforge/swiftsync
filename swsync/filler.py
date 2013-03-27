@@ -25,8 +25,6 @@
 # Read pickled index file (index_path) to process a deletion
 # of objects/containers store in swift for each account then delete
 # accounts.
-
-
 import os
 import sys
 

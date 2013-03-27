@@ -18,7 +18,7 @@
 
 import setuptools
 
-from sync.openstack.common import setup
+from swsync.openstack.common import setup
 
 name = 'swsync'
 

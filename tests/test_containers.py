@@ -18,8 +18,7 @@ import urlparse
 
 import swiftclient
 
-import sync.containers
-import sync.objects
+import swsync.containers
 
 import base as test_base
 from fakes import STORAGE_ORIG, STORAGE_DEST, TENANTS_LIST, \
@@ -29,7 +28,7 @@ from fakes import STORAGE_ORIG, STORAGE_DEST, TENANTS_LIST, \
 class TestContainers(test_base.TestCase):
     def setUp(self):
         super(TestContainers, self).setUp()
-        self.container_cls = sync.containers.Containers()
+        self.container_cls = swsync.containers.Containers()
 
         self.tenant_name = 'foo1'
         self.tenant_id = TENANTS_LIST[self.tenant_name]['id']

@@ -18,7 +18,7 @@ import swiftclient
 import keystoneclient
 
 import base as test_base
-import sync.accounts
+import swsync.accounts
 from fakes import FakeSWConnection, TENANTS_LIST, STORAGE_ORIG, \
     STORAGE_DEST, FakeSWClient, FakeKS, CONFIGDICT, CONTAINERS_LIST, \
     fake_get_config
@@ -27,13 +27,13 @@ from fakes import FakeSWConnection, TENANTS_LIST, STORAGE_ORIG, \
 class TestAccount(test_base.TestCase):
     def setUp(self):
         super(TestAccount, self).setUp()
-        self.accounts_cls = sync.accounts.Accounts()
+        self.accounts_cls = swsync.accounts.Accounts()
         self._stubs()
 
     def _stubs(self):
         self.stubs.Set(keystoneclient.v2_0, 'client', FakeKS)
         self.stubs.Set(swiftclient.client, 'Connection', FakeSWConnection)
-        self.stubs.Set(sync.accounts, 'get_config', fake_get_config)
+        self.stubs.Set(swsync.accounts, 'get_config', fake_get_config)
         self.stubs.Set(swiftclient, 'get_account', FakeSWClient.get_account)
         self.stubs.Set(swiftclient, 'http_connection',
                        FakeSWClient.http_connection)
