@@ -46,8 +46,8 @@ class Containers(object):
             p = dest_storage_cnx[0]
             url = "%s://%s%s" % (p.scheme, p.netloc, p.path)
             swiftclient.put_container(url,
-                dest_token, container_name,
-                headers=container_headers)
+                                      dest_token, container_name,
+                                      headers=container_headers)
 
         dest_container_stats, dest_objects = swiftclient.get_container(
             None, dest_token, container_name, http_conn=dest_storage_cnx,

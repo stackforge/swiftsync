@@ -77,9 +77,10 @@ def create_swift_user(client, account_name, account_id, user_amount):
         user = get_rand_str(mode='user_')
         # Create a user in that tenant
         uid = client.users.create(user,
-                             get_config('filler', 'default_user_password'),
-                             get_config('filler', 'default_user_email'),
-                             account_id)
+                                  get_config('filler',
+                                             'default_user_password'),
+                                  get_config('filler', 'default_user_email'),
+                                  account_id)
         # Get swift_operator_role id
         roleid = [role.id for role in client.roles.list()
                   if role.name == get_config('filler', 'swift_operator_role')]
@@ -149,10 +150,10 @@ def delete_account(client, user_id, acc):
 
 def swift_cnx(acc, user):
     cnx = sclient.Connection(get_config('auth', 'keystone_origin'),
-                            user=user,
-                            key=get_config('filler', 'default_user_password'),
-                            tenant_name=acc[0],
-                            auth_version=2)
+                             user=user,
+                             key=get_config('filler', 'default_user_password'),
+                             tenant_name=acc[0],
+                             auth_version=2)
     return cnx
 
 
@@ -183,11 +184,11 @@ def create_objects(cnx, acc, o_amount, fmax, index_containers):
             meta_keys = [customize(m, (i + 1) % 3) for m in
                          map(get_rand_str, ('X-Object-Meta-',) * 3)]
             meta_values = [customize(m, (i + 1) % 3) for m in
-                         map(get_rand_str, ('meta_v_',) * 3)]
+                           map(get_rand_str, ('meta_v_',) * 3)]
             meta = dict(zip(meta_keys, meta_values))
             data = f_object.read()
             etag = cnx.put_object(container, object_name,
-                              data, headers=copy(meta))
+                                  data, headers=copy(meta))
             f_object.close()
             obj_info = {'object_info':
                         (object_name, etag, len(data)), 'meta': meta}
