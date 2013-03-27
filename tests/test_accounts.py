@@ -79,8 +79,7 @@ class TestAccount(test_base.TestCase):
         class Containers(object):
             def sync(*args, **kwargs):
                 ret.append(args)
-
-        sync.accounts.containers.Containers = Containers
+        self.accounts_cls.container_cls = Containers()
 
         tenant_name = TENANTS_LIST.keys()[0]
         orig_storage_url = "%s/AUTH_%s" % (STORAGE_ORIG,

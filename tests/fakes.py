@@ -26,28 +26,38 @@ TENANTS_LIST = {'foo1': {'id': uuid.uuid4().hex},
                 'foo2': {'id': uuid.uuid4().hex},
                 'foo3': {'id': uuid.uuid4().hex}}
 
-get_container = lambda x: {'name': x,
-                           'bytes': random.randint(1, 5000),
-                           'count': random.randint(1, 50),
-                           'bytes': random.randint(1, 5000)}
-get_object = lambda x: {'bytes': random.randint(1, 5000),
-                        'last_modified': str(datetime.datetime.now()),
-                        'name': x}
+
+def gen_random_lastmodified():
+    delta = datetime.timedelta(seconds=random.randint(1, 60))
+    return str(datetime.datetime.now() + delta)
+
+
+def gen_container(x):
+    return {'name': x,
+            'bytes': random.randint(1, 5000),
+            'count': random.randint(1, 50),
+            'bytes': random.randint(1, 5000)}
+
+
+def gen_object(x):
+    return {'bytes': random.randint(1, 5000),
+            'last_modified': gen_random_lastmodified(),
+            'name': x}
 
 CONTAINERS_LIST = [
-    (get_container('cont1'),
-     [get_object('obj%s' % (x)) for x in xrange(random.randint(1, 100))]),
-    (get_container('cont2'),
-     [get_object('obj%s' % (x)) for x in xrange(random.randint(1, 100))]),
-    (get_container('cont3'),
-     [get_object('obj%s' % (x)) for x in xrange(random.randint(1, 100))]),
+    (gen_container('cont1'),
+     [gen_object('obj%s' % (x)) for x in xrange(random.randint(1, 10))]),
+    (gen_container('cont2'),
+     [gen_object('obj%s' % (x)) for x in xrange(random.randint(1, 10))]),
+    (gen_container('cont3'),
+     [gen_object('obj%s' % (x)) for x in xrange(random.randint(1, 10))]),
 ]
 
 CONTAINER_HEADERS = {
     'x-foo': 'true', 'x-bar': 'bar',
-    'x-container-object-count': _,
-    'x-container-bytes-used': _,
-    'x-trans-id': _,
+    'x-container-object-count': '10',
+    'x-container-bytes-used': '1000000',
+    'x-trans-id': 'transid',
 }
 
 CONFIGDICT = {'auth':
@@ -80,12 +90,6 @@ class FakeSWClient(object):
     @staticmethod
     def http_connection(url):
         return (urlparse.urlparse(url), None)
-
-    @staticmethod
-    def get_container(_, token, name, **kwargs):
-        for clist in CONTAINERS_LIST:
-            if clist[0]['name'] == name:
-                return (CONTAINER_HEADERS, clist[0])
 
     @staticmethod
     def get_account(*args, **kwargs):

@@ -29,6 +29,7 @@ class Accounts(object):
     """Process Keystone Accounts."""
     def __init__(self):
         self.keystone_cnx = None
+        self.container_cls = containers.Containers()
 
     def get_swift_auth(self, auth_url, tenant, user, password):
         """Get swift connexion from args"""
@@ -60,16 +61,15 @@ class Accounts(object):
                                     http_conn=orig_storage_cnx,
                                     full_listing=True))
 
-        container_cls = containers.Containers()
         for container in orig_containers:
             print container
             dt1 = datetime.datetime.fromtimestamp(time.time())
-            container_cls.sync(orig_storage_cnx,
-                               orig_storage_url,
-                               orig_token,
-                               dest_storage_cnx,
-                               dest_storage_url, dest_token,
-                               container['name'])
+            self.container_cls.sync(orig_storage_cnx,
+                                    orig_storage_url,
+                                    orig_token,
+                                    dest_storage_cnx,
+                                    dest_storage_url, dest_token,
+                                    container['name'])
 
             dt2 = datetime.datetime.fromtimestamp(time.time())
             rd = dateutil.relativedelta.relativedelta(dt2, dt1)

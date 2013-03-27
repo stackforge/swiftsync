@@ -25,10 +25,12 @@ class Containers(object):
     """Containers syncornization."""
     def __init__(self):
         self.max_gthreads = int(get_config("sync", "max_gthreads"))
+        self.objects_cls = sync_object
 
     def sync(self, orig_storage_cnx, orig_storage_url,
              orig_token, dest_storage_cnx, dest_storage_url, dest_token,
              container_name):
+
         orig_container_stats, orig_objects = swiftclient.get_container(
             None, orig_token, container_name, http_conn=orig_storage_cnx,
         )
@@ -53,8 +55,8 @@ class Containers(object):
 
         set1 = set((x['last_modified'], x['name']) for x in orig_objects)
         set2 = set((x['last_modified'], x['name']) for x in dest_objects)
-
         diff = set1 - set2
+
         if not diff:
             return
 
@@ -62,7 +64,7 @@ class Containers(object):
         pile = eventlet.GreenPile(pool)
         for obj in diff:
             print obj
-            pile.spawn(sync_object,
+            pile.spawn(self.objects_cls,
                        orig_storage_url,
                        orig_token,
                        dest_storage_url,
