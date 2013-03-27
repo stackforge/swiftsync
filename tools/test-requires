@@ -1,0 +1,9 @@
+distribute>=0.6.24
+
+coverage
+discover
+eventlet
+pep8==1.3
+python-keystoneclient
+testrepository>=0.0.13
+testtools>=0.9.22

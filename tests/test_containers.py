@@ -82,6 +82,7 @@ class TestContainers(test_base.TestCase):
             else:
                 cont = CONTAINERS_LIST[0][0]
                 objects = list(CONTAINERS_LIST[0][1])
+                # Add an object to target.
                 objects.append(gen_object('NEWOBJ'))
 
             return (cont, objects)
