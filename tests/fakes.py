@@ -16,6 +16,8 @@
 # under the License.
 import uuid
 import random
+import datetime
+import urlparse
 
 STORAGE_ORIG = 'http://storage-orig.com'
 STORAGE_DEST = 'http://storage-dest.com'
@@ -24,15 +26,29 @@ TENANTS_LIST = {'foo1': {'id': uuid.uuid4().hex},
                 'foo2': {'id': uuid.uuid4().hex},
                 'foo3': {'id': uuid.uuid4().hex}}
 
-CONTAINERS_LIST = [{'count': random.randint(1, 100),
-                   'name': "cont1",
-                   'bytes': random.randint(1, 10000)},
-                   {'count': random.randint(1, 100),
-                    'name': "cont2",
-                    'bytes': random.randint(1, 10000)},
-                   {'count': random.randint(1, 100),
-                    'name': "cont3",
-                    'bytes': random.randint(1, 10000)}]
+get_container = lambda x: {'name': x,
+                           'bytes': random.randint(1, 5000),
+                           'count': random.randint(1, 50),
+                           'bytes': random.randint(1, 5000)}
+get_object = lambda x: {'bytes': random.randint(1, 5000),
+                        'last_modified': str(datetime.datetime.now()),
+                        'name': x}
+
+CONTAINERS_LIST = [
+    (get_container('cont1'),
+     [get_object('obj%s' % (x)) for x in xrange(random.randint(1, 100))]),
+    (get_container('cont2'),
+     [get_object('obj%s' % (x)) for x in xrange(random.randint(1, 100))]),
+    (get_container('cont3'),
+     [get_object('obj%s' % (x)) for x in xrange(random.randint(1, 100))]),
+]
+
+CONTAINER_HEADERS = {
+    'x-foo': 'true', 'x-bar': 'bar',
+    'x-container-object-count': _,
+    'x-container-bytes-used': _,
+    'x-trans-id': _,
+}
 
 CONFIGDICT = {'auth':
               {'keystone_origin': STORAGE_ORIG,
@@ -55,28 +71,26 @@ class FakeSWConnection(object):
         return ('%s/v1/AUTH_%s' % (STORAGE_DEST, tenant_id), 'token')
 
 
-class FakeSWContainer(object):
-    def __init__(self, dico):
-        self.dico = dico
-
-    def __getitem__(self, key):
-        if key == 'name':
-            return self.dico['name']
-
-    def __repr__(self):
-        return str(self.dico)
+class FakeSWObject(object):
+    def __init__(self, object_name):
+        pass
 
 
 class FakeSWClient(object):
     @staticmethod
     def http_connection(url):
-        #TODO:
-        return "cnx"
+        return (urlparse.urlparse(url), None)
+
+    @staticmethod
+    def get_container(_, token, name, **kwargs):
+        for clist in CONTAINERS_LIST:
+            if clist[0]['name'] == name:
+                return (CONTAINER_HEADERS, clist[0])
 
     @staticmethod
     def get_account(*args, **kwargs):
-        return (random.randint(1, 9999),
-                [FakeSWContainer(x) for x in CONTAINERS_LIST])
+        return (('x-foo', 'x-bar'),
+                [x[0] for x in CONTAINERS_LIST])
 
 
 def fake_get_auth(auth_url, tenant, user, password):
