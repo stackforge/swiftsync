@@ -14,27 +14,29 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-import unittest2
 import swiftclient
 import keystoneclient
 
+import base as test_base
 import sync.accounts
 from fakes import FakeSWConnection, TENANTS_LIST, STORAGE_ORIG, \
     STORAGE_DEST, FakeSWClient, FakeKS, CONFIGDICT, CONTAINERS_LIST, \
     fake_get_config
 
 
-class TestAccount(unittest2.TestCase):
+class TestAccount(test_base.TestCase):
     def setUp(self):
+        super(TestAccount, self).setUp()
         self.accounts_cls = sync.accounts.Accounts()
-        self._monkey_patch()
+        self._stubs()
 
-    def _monkey_patch(self):
-        keystoneclient.v2_0.client = FakeKS
-        swiftclient.get_account = FakeSWClient.get_account
-        swiftclient.http_connection = FakeSWClient.http_connection
-        swiftclient.client.Connection = FakeSWConnection
-        sync.accounts.get_config = fake_get_config
+    def _stubs(self):
+        self.stubs.Set(keystoneclient.v2_0, 'client', FakeKS)
+        self.stubs.Set(swiftclient.client, 'Connection', FakeSWConnection)
+        self.stubs.Set(sync.accounts, 'get_config', fake_get_config)
+        self.stubs.Set(swiftclient, 'get_account', FakeSWClient.get_account)
+        self.stubs.Set(swiftclient, 'http_connection',
+                       FakeSWClient.http_connection)
 
     def test_get_swift_auth(self):
         tenant_name = 'foo1'
