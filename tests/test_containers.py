@@ -65,6 +65,45 @@ class TestContainers(test_base.TestCase):
         )
         self.assertEqual(len(get_cnt_called), 1)
 
+    def test_dont_sync_dest(self):
+        get_cnt_called = []
+        sync_object_called = []
+
+        def head_container(*args, **kwargs):
+            pass
+
+        def get_container(*args, **kwargs):
+            # MASTER
+            if not get_cnt_called:
+                cont = CONTAINERS_LIST[0][0]
+                objects = list(CONTAINERS_LIST[0][1])
+                get_cnt_called.append(True)
+            # TARGET
+            else:
+                cont = CONTAINERS_LIST[0][0]
+                objects = list(CONTAINERS_LIST[0][1])
+                objects.append(gen_object('NEWOBJ'))
+
+            return (cont, objects)
+
+        def sync_object(*args, **kwargs):
+            sync_object_called.append(args)
+
+        self.stubs.Set(swiftclient, 'head_container', head_container)
+        self.stubs.Set(swiftclient, 'get_container', get_container)
+        self.container_cls.objects_cls = sync_object
+
+        self.container_cls.sync(
+            self.orig_storage_cnx,
+            self.orig_storage_url,
+            "token",
+            self.dest_storage_cnx,
+            self.dest_storage_url,
+            "token",
+            "cont1")
+
+        self.assertEqual(len(sync_object_called), 0)
+
     def test_sync(self):
         get_cnt_called = []
         sync_object_called = []
@@ -78,7 +117,7 @@ class TestContainers(test_base.TestCase):
                 cont = CONTAINERS_LIST[0][0]
                 objects = list(CONTAINERS_LIST[0][1])
                 objects.append(gen_object('NEWOBJ'))
-                get_cnt_called.append((cont, objects))
+                get_cnt_called.append(True)
             # TARGET
             else:
                 cont = CONTAINERS_LIST[0][0]
