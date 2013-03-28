@@ -73,6 +73,24 @@ class TestObject(test_base.TestCase):
                           swobjects.get_object,
                           self.orig_storage_url, "token", "cont1", "obj1")
 
+    def test_sync_object(self):
+        body = ("X" * 3) * 1024
+        new_connect = fake_http_connect(200, body)
+        self.stubs.Set(swobjects, 'http_connect_raw', new_connect)
+
+        def put_object(url, name=None, headers=None, contents=None):
+            self.assertEqual('obj1', name)
+            self.assertIn('x-auth-token', headers)
+            self.assertIsInstance(contents, swobjects._Iter2FileLikeObject)
+            contents_read = contents.read()
+            self.assertEqual(len(contents_read), len(body))
+
+        self.stubs.Set(swobjects.swiftclient, 'put_object', put_object)
+
+        swobjects.sync_object(self.orig_storage_url,
+                              "token", self.dest_storage_url, "token",
+                              "cont1", ("etag", "obj1"))
+
     def test_get_object_chunked(self):
         chunk_size = 32
         expected_chunk_time = 3

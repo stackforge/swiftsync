@@ -93,6 +93,3 @@ def sync_object(orig_storage_url, orig_token, dest_storage_url,
     swiftclient.put_object(sync_to, name=object_name,
                            headers=post_headers,
                            contents=_Iter2FileLikeObject(orig_body))
-
-if __name__ == '__main__':
-    pass
