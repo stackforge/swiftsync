@@ -18,7 +18,7 @@ import os
 import ConfigParser
 
 
-CONFIG = {}
+CONFIG = None
 curdir = os.path.abspath(os.path.dirname(__file__))
 INIFILE = os.path.abspath(os.path.join(curdir, '..', 'etc', "config.ini"))
 
@@ -27,24 +27,25 @@ class ConfigurationError(Exception):
     pass
 
 
-def parse_ini(inifile):
-    if os.path.exists(inifile):
-        fp = open(inifile)
-    elif type(inifile) is file:
-        fp = inifile
+def parse_ini(inicfg=INIFILE):
+    if hasattr(inicfg, 'read'):
+        fp = inicfg
+    elif os.path.exists(inicfg):
+        fp = open(inicfg)
     else:
-        raise ConfigurationError("Cannot found inifile")
+        raise ConfigurationError("Cannot found inicfg")
 
     config = ConfigParser.RawConfigParser()
     config.readfp(fp)
     return config
 
 
-def get_config(section, option, default=None):
+def get_config(section, option, default=None, _config=None):
     """Get section/option from ConfigParser or print default if specified"""
     global CONFIG
-
-    if not CONFIG:
+    if _config:
+        CONFIG = _config
+    elif not CONFIG:
         CONFIG = parse_ini()
 
     if not CONFIG.has_section(section):
