@@ -2,5 +2,7 @@ simplejson
 swift
 python-swiftclient
 webob
-pythno-dateutil
+python-dateutil
 netifaces
+eventlet
+python-keystoneclient
