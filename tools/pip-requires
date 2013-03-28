@@ -4,3 +4,5 @@ python-swiftclient
 webob
 python-dateutil
 netifaces
+eventlet
+python-keystoneclient
