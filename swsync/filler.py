@@ -40,7 +40,7 @@ from swiftclient import client as sclient
 import eventlet
 
 sys.path.append("../")
-from common.utils import get_config
+from utils import get_config
 
 eventlet.patcher.monkey_patch()
 

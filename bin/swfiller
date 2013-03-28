@@ -10,7 +10,7 @@ import eventlet
 from keystoneclient.v2_0 import client as ksclient
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from common.utils import get_config
+from swsync.utils import get_config
 from swsync.filler import (load_index, load_containers_index,
                            create_swift_account, fill_swift,
                            delete_account_content, delete_account)
