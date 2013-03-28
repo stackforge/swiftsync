@@ -112,7 +112,3 @@ class Accounts(object):
 def main():
     acc = Accounts()
     acc.process()
-
-
-if __name__ == '__main__':
-    main()
