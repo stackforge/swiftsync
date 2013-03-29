@@ -138,7 +138,7 @@ def delete_account_content(acc, user):
 def delete_account(client, user_id, acc):
     account_id = acc[1]
     if not isinstance(user_id, list):
-        user_id = (user_id)
+        user_id = (user_id,)
     for uid in user_id:
         print "Delete user with id : %s" % uid
         client.users.delete(uid)
