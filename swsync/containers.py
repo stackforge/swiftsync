@@ -14,6 +14,8 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import logging
+
 import swiftclient
 import eventlet
 
@@ -63,7 +65,7 @@ class Containers(object):
         pool = eventlet.GreenPool(size=self.max_gthreads)
         pile = eventlet.GreenPile(pool)
         for obj in diff:
-            print obj
+            logging.info("sending: %s ts:%s", obj[1], obj[0])
             pile.spawn(self.objects_cls,
                        orig_storage_url,
                        orig_token,
