@@ -71,7 +71,7 @@ class TestAccount(test_base.TestCase):
         ret_orig_storage_id = sorted(
             x[0][x[0].find('AUTH_') + 5:] for x in ret)
         self.assertEquals(tenant_list_ids, ret_orig_storage_id)
-        [self.assertTrue(x[1].startswith(STORAGE_DEST)) for x in ret]
+        [self.assertTrue(y[1].startswith(STORAGE_DEST)) for y in ret]
 
     def test_sync_account(self):
         ret = []
