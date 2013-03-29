@@ -35,7 +35,7 @@ class TestFiller(test_base.TestCase):
                        FakeSWConnection)
 
     def get_connection(self, *args):
-        return swiftclient.client.Connection(get_config( \
+        return swiftclient.client.Connection(get_config(
                                              'auth', 'keystone_origin'),
                                              'test', 'password',
                                              tenant_name='test')
@@ -47,9 +47,7 @@ class TestFiller(test_base.TestCase):
         def put_container(*args, **kwargs):
             get_containers_created.append(args[1])
 
-        self.stubs.Set(FakeSWConnection,
-                       'put_container',
-                        put_container)
+        self.stubs.Set(FakeSWConnection, 'put_container', put_container)
         cnx = self.get_connection()
         filler.create_containers(cnx, 'test', 3, return_dict_ref)
         self.assertEqual(len(get_containers_created), 3)
@@ -61,8 +59,7 @@ class TestFiller(test_base.TestCase):
     def test_create_objects(self):
         get_object_created = []
         return_dict_ref = {'test': {'container_a': {'objects': []},
-                                    'container_b': {'objects': []}}
-                          }
+                                    'container_b': {'objects': []}}}
 
         def put_object(*args, **kwargs):
             get_object_created.append(args[1:])
@@ -84,8 +81,10 @@ class TestFiller(test_base.TestCase):
 
         def create_objects(*args, **kwargs):
             self.obj_cnt += 1
+
         def create_containers(*args, **kwargs):
             self.cont_cnt += 1
+
         def swift_cnx(*args, **kargs):
             return self.get_connection()
 
@@ -109,6 +108,7 @@ class TestFiller(test_base.TestCase):
         def create(*args, **kargs):
             self.create_cnt += 1
             return FakeKSUser()
+
         def add_user_role(*args, **kargs):
             self.role_cnt += 1
 
@@ -125,7 +125,7 @@ class TestFiller(test_base.TestCase):
     def test_create_swift_account(self):
         self.ret_index = {}
         self.user_cnt = 0
-        
+
         def create_swift_user(*args):
             self.user_cnt += 1
 
@@ -153,7 +153,7 @@ class TestFiller(test_base.TestCase):
         client.tenants.delete = delete_t
         client.users.delete = delete_u
         filler.delete_account(client,
-                              [FakeKSUser().id,],
+                              [FakeKSUser().id, ],
                               ('account1', 'account1_id'))
 
         self.assertEqual(self.delete_t_cnt, 1)
@@ -165,13 +165,15 @@ class TestFiller(test_base.TestCase):
         self.cnt_do = 0
 
         filler.swift_cnx = self.get_connection
-        
+
         def get_account(*args, **kwargs):
             self.cnt_ga += 1
-            return (None,({'name': 'cont1'}, {'name': 'cont2'}))
+            return (None, ({'name': 'cont1'}, {'name': 'cont2'}))
+
         def get_container(*args, **kwargs):
             self.cnt_co += 1
-            return (None,({'name': 'obj1'}, {'name': 'obj2'}))
+            return (None, ({'name': 'obj1'}, {'name': 'obj2'}))
+
         def delete_object(*args, **kwargs):
             self.cnt_do += 1
 
