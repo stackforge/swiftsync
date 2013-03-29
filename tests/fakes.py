@@ -79,7 +79,21 @@ class FakeSWConnection(object):
         tenant, user = self.mainargs[1].split(':')
         tenant_id = TENANTS_LIST[tenant]['id']
         return ('%s/v1/AUTH_%s' % (STORAGE_DEST, tenant_id), 'token')
+    
+    def get_container(*args, **kargs):
+        pass
 
+    def delete_object(self, *args, **kargs):
+        pass
+
+    def put_container(self, *args, **kargs):
+        pass
+    
+    def put_object(self, *args, **kargs):
+        pass
+
+    def get_account(self, *args, **kargs):
+        pass
 
 class FakeSWObject(object):
     def __init__(self, object_name):
@@ -95,7 +109,7 @@ class FakeSWClient(object):
     def get_account(*args, **kwargs):
         return (('x-foo', 'x-bar'),
                 [x[0] for x in CONTAINERS_LIST])
-
+    
 
 def fake_get_auth(auth_url, tenant, user, password):
     return FakeSWConnection(
@@ -116,17 +130,48 @@ class FakeKSTenant(object):
     def __str__(self):
         return self.tenant_name
 
+class FakeKSUser(object):
+    def __init__(self):
+        self.id = uuid.uuid4().hex
+
+
+class FakeKSClientUsers(object):
+    def create(self, *args):
+        return FakeKSUser()
+
+    def delete(self, *args):
+        pass
+
+
+class FakeKSRole(object):
+    def __init__(self):
+        self.id = uuid.uuid4().hex
+        self.name = 'Member'
+
+
+class FakeKSClientRoles(object):
+    def add_user_role(self, *args):
+        pass
+    def list(self):
+        return [FakeKSRole(),]
 
 class FakeKSClientTenant(object):
     def list(self):
         for t in list(TENANTS_LIST):
             yield FakeKSTenant(t)
+    def create(self, account):
+        return FakeKSTenant(TENANTS_LIST.keys()[0])
+
+    def delete(self, *args):
+        pass
 
 
 class FakeKSClient(object):
     def __init__(self, *args):
         self.args = args
         self.tenants = FakeKSClientTenant()
+        self.roles = FakeKSClientRoles()
+        self.users = FakeKSClientUsers()
 
     def __call__(self):
         return self.args
