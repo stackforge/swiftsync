@@ -24,11 +24,38 @@ from swsync.utils import get_config
 
 
 class Containers(object):
-    """Containers syncornization."""
+    """Containers sync."""
     def __init__(self):
         self.max_gthreads = int(get_config("sync", "max_gthreads"))
         self.sync_object = sync_object
         self.delete_object = delete_object
+
+    def delete_container(self, dest_storage_cnx, dest_token,
+                         orig_containers,
+                         dest_containers):
+        set1 = set((x['name']) for x in orig_containers)
+        set2 = set((x['name']) for x in dest_containers)
+        delete_diff = set2 - set1
+
+        pool = eventlet.GreenPool(size=self.max_gthreads)
+        pile = eventlet.GreenPile(pool)
+        for container in delete_diff:
+            dest_container_stats, dest_objects = swiftclient.get_container(
+                None, dest_token, container, http_conn=dest_storage_cnx,
+            )
+            for obj in dest_objects:
+                logging.info("deleting obj: %s ts:%s", obj['name'],
+                             obj['last_modified'])
+                pile.spawn(self.delete_object,
+                           dest_storage_cnx,
+                           dest_token,
+                           container,
+                           obj['name'])
+            pool.waitall()
+            logging.info("deleting container: %s", container)
+            pile.spawn(swiftclient.delete_container,
+                       '', dest_token, container, http_conn=dest_storage_cnx)
+        pool.waitall()
 
     def sync(self, orig_storage_cnx, orig_storage_url,
              orig_token, dest_storage_cnx, dest_storage_url, dest_token,
@@ -79,7 +106,8 @@ class Containers(object):
         for obj in delete_diff:
             logging.info("deleting: %s ts:%s", obj[1], obj[0])
             pile.spawn(self.delete_object,
-                       dest_storage_url,
-                       dest_token, container_name,
-                       obj)
+                       dest_storage_cnx,
+                       dest_token,
+                       container_name,
+                       obj[1])
         pool.waitall()
