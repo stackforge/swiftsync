@@ -77,6 +77,15 @@ def get_object(storage_url, token,
     return (resp_headers, object_body)
 
 
+def delete_object(dest_storage_url, dest_token,
+                  container_name, object_name_etag):
+
+    delete_object = "%s/%s/%s" % (dest_storage_url,
+                                  container_name, object_name_etag[1])
+    delete_headers = {'x-auth-token': dest_token}
+    swiftclient.delete_object(delete_object, headers=delete_headers)
+
+
 def sync_object(orig_storage_url, orig_token, dest_storage_url,
                 dest_token, container_name, object_name_etag):
     orig_headers, orig_body = get_object(orig_storage_url,

@@ -32,10 +32,10 @@ class TestContainers(test_base.TestCase):
 
         self.tenant_name = 'foo1'
         self.tenant_id = TENANTS_LIST[self.tenant_name]['id']
-        self.orig_storage_url = "%s/AUTH_%s" % (STORAGE_ORIG, self.tenant_id)
+        self.orig_storage_url = '%s/AUTH_%s' % (STORAGE_ORIG, self.tenant_id)
         self.orig_storage_cnx = (urlparse.urlparse(self.orig_storage_url),
                                  None)
-        self.dest_storage_url = "%s/AUTH_%s" % (STORAGE_DEST, self.tenant_id)
+        self.dest_storage_url = '%s/AUTH_%s' % (STORAGE_DEST, self.tenant_id)
         self.dest_storage_cnx = (urlparse.urlparse(self.dest_storage_url),
                                  None)
 
@@ -46,7 +46,7 @@ class TestContainers(test_base.TestCase):
             get_cnt_called.append(args)
 
         def head_container(*args, **kwargs):
-            raise swiftclient.client.ClientException("Not Here")
+            raise swiftclient.client.ClientException('Not Here')
 
         def get_container(_, token, name, **kwargs):
             for clist in CONTAINERS_LIST:
@@ -58,18 +58,26 @@ class TestContainers(test_base.TestCase):
         self.stubs.Set(swiftclient, 'head_container', head_container)
 
         self.container_cls.sync(
-            self.orig_storage_cnx, self.orig_storage_url, "token",
-            self.dest_storage_cnx, self.dest_storage_url, "token",
-            "cont1"
+            self.orig_storage_cnx, self.orig_storage_url, 'token',
+            self.dest_storage_cnx, self.dest_storage_url, 'token',
+            'cont1'
         )
         self.assertEqual(len(get_cnt_called), 1)
 
-    def test_dont_sync_dest(self):
+    def test_delete_dest(self):
+        # probably need to change that to mox properly
         get_cnt_called = []
         sync_object_called = []
+        delete_object_called = []
+
+        def delete_object(*args, **kwargs):
+            delete_object_called.append((args, kwargs))
+        self.stubs.Set(swsync.objects.swiftclient,
+                       'delete_object', delete_object)
 
         def head_container(*args, **kwargs):
-            pass
+            return True
+        self.stubs.Set(swiftclient, 'head_container', head_container)
 
         def get_container(*args, **kwargs):
             # MASTER
@@ -89,20 +97,21 @@ class TestContainers(test_base.TestCase):
         def sync_object(*args, **kwargs):
             sync_object_called.append(args)
 
-        self.stubs.Set(swiftclient, 'head_container', head_container)
         self.stubs.Set(swiftclient, 'get_container', get_container)
-        self.container_cls.objects_cls = sync_object
+
+        self.container_cls.sync_object = sync_object
 
         self.container_cls.sync(
             self.orig_storage_cnx,
             self.orig_storage_url,
-            "token",
+            'token',
             self.dest_storage_cnx,
             self.dest_storage_url,
-            "token",
-            "cont1")
+            'token',
+            'cont1')
 
         self.assertEqual(len(sync_object_called), 0)
+        self.assertEqual(len(delete_object_called), 1)
 
     def test_sync(self):
         get_cnt_called = []
@@ -130,15 +139,15 @@ class TestContainers(test_base.TestCase):
 
         self.stubs.Set(swiftclient, 'head_container', head_container)
         self.stubs.Set(swiftclient, 'get_container', get_container)
-        self.container_cls.objects_cls = sync_object
+        self.container_cls.sync_object = sync_object
 
         self.container_cls.sync(
             self.orig_storage_cnx,
             self.orig_storage_url,
-            "token",
+            'token',
             self.dest_storage_cnx,
             self.dest_storage_url,
-            "token",
-            "cont1")
+            'token',
+            'cont1')
 
         self.assertEqual(sync_object_called[0][-1][1], 'NEWOBJ')
