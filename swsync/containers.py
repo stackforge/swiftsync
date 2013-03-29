@@ -19,7 +19,7 @@ import logging
 import swiftclient
 import eventlet
 
-from swsync.objects import sync_object
+from swsync.objects import sync_object, delete_object
 from swsync.utils import get_config
 
 
@@ -27,7 +27,8 @@ class Containers(object):
     """Containers syncornization."""
     def __init__(self):
         self.max_gthreads = int(get_config("sync", "max_gthreads"))
-        self.objects_cls = sync_object
+        self.sync_object = sync_object
+        self.delete_object = delete_object
 
     def sync(self, orig_storage_cnx, orig_storage_url,
              orig_token, dest_storage_cnx, dest_storage_url, dest_token,
@@ -58,17 +59,26 @@ class Containers(object):
         set1 = set((x['last_modified'], x['name']) for x in orig_objects)
         set2 = set((x['last_modified'], x['name']) for x in dest_objects)
         diff = set1 - set2
+        delete_diff = set2 - set1
 
-        if not diff:
+        if not diff and not delete_diff:
             return
 
         pool = eventlet.GreenPool(size=self.max_gthreads)
         pile = eventlet.GreenPile(pool)
+
         for obj in diff:
             logging.info("sending: %s ts:%s", obj[1], obj[0])
-            pile.spawn(self.objects_cls,
+            pile.spawn(self.sync_object,
                        orig_storage_url,
                        orig_token,
+                       dest_storage_url,
+                       dest_token, container_name,
+                       obj)
+
+        for obj in delete_diff:
+            logging.info("deleting: %s ts:%s", obj[1], obj[0])
+            pile.spawn(self.delete_object,
                        dest_storage_url,
                        dest_token, container_name,
                        obj)
