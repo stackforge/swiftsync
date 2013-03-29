@@ -57,10 +57,21 @@ class Accounts(object):
         orig_storage_cnx = swiftclient.http_connection(orig_storage_url)
         dest_storage_cnx = swiftclient.http_connection(dest_storage_url)
 
-        _, orig_containers = (
+        orig_stats, orig_containers = (
             swiftclient.get_account(None, orig_token,
                                     http_conn=orig_storage_cnx,
                                     full_listing=True))
+
+        dest_stats, dest_containers = (
+            swiftclient.get_account(None, dest_token,
+                                    http_conn=dest_storage_cnx,
+                                    full_listing=True))
+        if int(dest_stats['x-account-container-count']) > \
+                int(orig_stats['x-account-container-count']):
+            self.container_cls.delete_container(dest_storage_cnx,
+                                                dest_token,
+                                                orig_containers,
+                                                dest_containers)
 
         for container in orig_containers:
             logging.info("Syncronizing %s: %s", container['name'], container)
