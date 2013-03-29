@@ -59,6 +59,7 @@ class Main(object):
             except(ConfigurationError):
                 parser.print_help()
                 sys.exit(1)
+
         self.set_logging()
         #beurk
         swsync.utils.CONFIG = conf

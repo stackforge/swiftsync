@@ -16,6 +16,7 @@
 # under the License.
 import time
 import datetime
+import logging
 
 import swiftclient
 import dateutil.relativedelta
@@ -62,7 +63,7 @@ class Accounts(object):
                                     full_listing=True))
 
         for container in orig_containers:
-            print container
+            logging.info("Syncronizing %s: %s", container['name'], container)
             dt1 = datetime.datetime.fromtimestamp(time.time())
             self.container_cls.sync(orig_storage_cnx,
                                     orig_storage_url,
@@ -74,10 +75,10 @@ class Accounts(object):
             dt2 = datetime.datetime.fromtimestamp(time.time())
             rd = dateutil.relativedelta.relativedelta(dt2, dt1)
             #TODO(chmou): use logging
-            print "%d hours, %d minutes and %d seconds" % (rd.hours,
-                                                           rd.minutes,
-                                                           rd.seconds)
-            print
+            logging.info("%s done: %d hours, %d minutes and %d seconds",
+                         container['name'],
+                         rd.hours,
+                         rd.minutes, rd.seconds)
 
     def process(self):
         """Process all keystone accounts to sync."""
