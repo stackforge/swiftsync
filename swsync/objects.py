@@ -77,6 +77,19 @@ def get_object(storage_url, token,
     return (resp_headers, object_body)
 
 
+def delete_object(dest_cnx,
+                  dest_token,
+                  container_name,
+                  object_name):
+    parsed = dest_cnx[0]
+    url = '%s://%s/%s' % (parsed.scheme, parsed.netloc, parsed.path)
+    swiftclient.delete_object(url=url,
+                              token=dest_token,
+                              container=container_name,
+                              http_conn=dest_cnx,
+                              name=object_name)
+
+
 def sync_object(orig_storage_url, orig_token, dest_storage_url,
                 dest_token, container_name, object_name_etag):
     orig_headers, orig_body = get_object(orig_storage_url,

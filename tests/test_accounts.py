@@ -30,11 +30,15 @@ class TestAccount(test_base.TestCase):
         self.accounts_cls = swsync.accounts.Accounts()
         self._stubs()
 
+    def get_account(self, *args, **kwargs):
+        return ({'x-account-container-count': len(CONTAINERS_LIST)},
+                [x[0] for x in CONTAINERS_LIST])
+
     def _stubs(self):
         self.stubs.Set(keystoneclient.v2_0, 'client', FakeKS)
         self.stubs.Set(swiftclient.client, 'Connection', FakeSWConnection)
         self.stubs.Set(swsync.accounts, 'get_config', fake_get_config)
-        self.stubs.Set(swiftclient, 'get_account', FakeSWClient.get_account)
+        self.stubs.Set(swiftclient, 'get_account', self.get_account)
         self.stubs.Set(swiftclient, 'http_connection',
                        FakeSWClient.http_connection)
 
@@ -71,7 +75,7 @@ class TestAccount(test_base.TestCase):
         ret_orig_storage_id = sorted(
             x[0][x[0].find('AUTH_') + 5:] for x in ret)
         self.assertEquals(tenant_list_ids, ret_orig_storage_id)
-        [self.assertTrue(x[1].startswith(STORAGE_DEST)) for x in ret]
+        [self.assertTrue(y[1].startswith(STORAGE_DEST)) for y in ret]
 
     def test_sync_account(self):
         ret = []

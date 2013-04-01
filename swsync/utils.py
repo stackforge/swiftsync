@@ -27,11 +27,13 @@ class ConfigurationError(Exception):
     pass
 
 
-def parse_ini(inicfg=INIFILE):
+def parse_ini(inicfg=None):
     if hasattr(inicfg, 'read'):
         fp = inicfg
-    elif os.path.exists(inicfg):
+    elif inicfg and os.path.exists(inicfg):
         fp = open(inicfg)
+    elif inicfg is None and os.path.exists(INIFILE):
+        fp = open(INIFILE)
     else:
         raise ConfigurationError("Cannot found inicfg")
 

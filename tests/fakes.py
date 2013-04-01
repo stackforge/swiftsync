@@ -106,11 +106,6 @@ class FakeSWClient(object):
     def http_connection(url):
         return (urlparse.urlparse(url), None)
 
-    @staticmethod
-    def get_account(*args, **kwargs):
-        return (('x-foo', 'x-bar'),
-                [x[0] for x in CONTAINERS_LIST])
-
 
 def fake_get_auth(auth_url, tenant, user, password):
     return FakeSWConnection(
