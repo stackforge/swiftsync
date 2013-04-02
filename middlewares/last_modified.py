@@ -42,19 +42,22 @@ class LastModifiedMiddleware(object):
 
     [filter:last-modified]
     use = egg:swift#last_modified
+    key_name = Last-Modified
     """
 
     def __init__(self, app, conf):
         self.app = app
         self.conf = conf
         self.logger = get_logger(self.conf, log_route='last_modified')
+        self.key_name = conf.get('key_name', 'Last-Modified').replace(' ', '-')
 
     def update_last_modified_meta(self, req, env):
         vrs, account, container, obj = req.split_path(1, 4, True)
         path = env['PATH_INFO']
         if obj:
             path = path.split('/%s' % obj)[0]
-        headers = {'X-Container-Meta-Last-Modified': str(time.time())}
+        metakey = 'X-Container-Meta-%s' % self.key_name
+        headers = {metakey: str(time.time())}
         set_meta_req = make_pre_authed_request(env,
                                                method='POST',
                                                path=path,
