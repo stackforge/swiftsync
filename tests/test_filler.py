@@ -17,7 +17,6 @@
 
 import eventlet
 import swiftclient
-import keystoneclient.v2_0.client  # noqa
 
 from swsync.utils import get_config
 from swsync import filler
