@@ -51,14 +51,14 @@ class LastModifiedMiddleware(object):
 
     def update_last_modified_meta(self, req, env):
         vrs, account, container, obj = req.split_path(1, 4, True)
+        path = env['PATH_INFO']
         if obj:
-            path = env['PATH_INFO'].split('/%s' % obj)[0]
+            path = path.split('/%s' % obj)[0]
         headers = {'X-Container-Meta-Last-Modified': str(time.time())}
         set_meta_req = make_pre_authed_request(env,
                                                method='POST',
                                                path=path,
                                                headers=headers,
-                                               environ=env,
                                                swift_source='lm')
         return set_meta_req.get_response(self.app)
 
