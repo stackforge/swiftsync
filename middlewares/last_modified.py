@@ -18,6 +18,7 @@
 
 import time
 from swift.common.utils import get_logger
+from swift.common.http import is_success
 from swift.common.swob import Request, wsgify
 
 
@@ -51,12 +52,12 @@ class LastModified(object):
          req.method == 'DELETE' and obj:
             new_env = req.environ.copy()
             user_resp = self.req_passthrough(req)
-            if user_resp.status_int // 100 == 2:
+            if is_success(user_resp.status_int):
                 # Update Container Meta Last-Modified in case of
                 # successful request
                 update_resp = self.update_last_modified_meta(req,
                                                              new_env)
-                if update_resp.status_int // 100 != 2:
+                if is_success(update_resp.status_int):
                     self.logger.info('Unable to update Meta Last-Modified')
             return user_resp
         return self.app
