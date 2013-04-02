@@ -19,7 +19,8 @@
 import time
 from swift.common.utils import get_logger
 from swift.common.http import is_success
-from swift.common.swob import Request, wsgify
+from swift.common.swob import wsgify
+from swift.common.wsgi import make_pre_authed_request
 
 
 class LastModifiedMiddleware(object):
@@ -34,12 +35,14 @@ class LastModifiedMiddleware(object):
     def update_last_modified_meta(self, req, env):
         vrs, account, container, obj = req.split_path(1, 4, True)
         if obj:
-            env['PATH_INFO'] = env['PATH_INFO'].split('/%s' % obj)[0]
-        env['REQUEST_METHOD'] = 'POST'
+            path = env['PATH_INFO'].split('/%s' % obj)[0]
         headers = {'X-Container-Meta-Last-Modified': str(time.time())}
-        set_meta_req = Request.blank(env['PATH_INFO'],
-                                     headers=headers,
-                                     environ=env)
+        set_meta_req = make_pre_authed_request(env,
+                                               method='POST',
+                                               path=path,
+                                               headers=headers,
+                                               environ=env,
+                                               swift_source='lm')
         return set_meta_req.get_response(self.app)
 
     def req_passthrough(self, req):
