@@ -97,8 +97,8 @@ def sync_object(orig_storage_url, orig_token, dest_storage_url,
                                          container_name,
                                          object_name_etag[1],
                                          )
-    container_name = quote(container_name)
-    object_name = quote(object_name_etag[1])
+    container_name = container_name
+    object_name = object_name_etag[1]
 
     post_headers = orig_headers
     post_headers['x-auth-token'] = dest_token
