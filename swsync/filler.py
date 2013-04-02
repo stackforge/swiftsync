@@ -206,7 +206,7 @@ def create_containers(cnx, acc, c_amount, index_containers=None):
         meta_values = [customize(m, (i + 1) % 3) for m in
                        map(get_rand_str, ('meta_v_',) * 3)]
         meta = dict(zip(meta_keys, meta_values))
-        print "Create container %s" % container_name
+        print "Create container %s" % container_name.encode('ascii', 'ignore')
         cnx.put_container(container_name, headers=copy(meta))
         containers_d[container_name] = {'meta': meta, 'objects': []}
 

@@ -17,12 +17,12 @@
 
 import eventlet
 import swiftclient
-import keystoneclient.v2_0.client
+import keystoneclient.v2_0.client  # noqa
 
 from swsync.utils import get_config
 from swsync import filler
 import base as test_base
-from fakes import FakeSWConnection, FakeSWClient, FakeKSClient, FakeKSUser
+from fakes import FakeSWConnection, FakeKSClient, FakeKSUser
 
 
 class TestFiller(test_base.TestCase):
