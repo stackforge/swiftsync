@@ -22,7 +22,7 @@ from swift.common.http import is_success
 from swift.common.swob import Request, wsgify
 
 
-class LastModified(object):
+class LastModifiedMiddleware(object):
     """
     """
 
@@ -67,6 +67,4 @@ def filter_factory(global_conf, **local_conf):
     conf = global_conf.copy()
     conf.update(local_conf)
 
-    def last_modified_filter(app):
-        return LastModified(app, conf)
-    return last_modified_filter
+    return lambda app: LastModifiedMiddleware(app, conf)
