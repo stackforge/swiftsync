@@ -92,6 +92,7 @@ class TestObject(test_base.TestCase):
                               "cont1", ("etag", "obj1"))
 
     def test_sync_object_utf8(self):
+        utf_obj = "யாமறிந்த"
         body = "FOO"
         new_connect = fake_http_connect(200, body)
         self.stubs.Set(swobjects, 'http_connect_raw', new_connect)
@@ -99,14 +100,13 @@ class TestObject(test_base.TestCase):
         def put_object(url, name=None, headers=None, contents=None):
             # Container is Quoted
             self.assertFalse(isinstance(url.split("/")[-1], unicode))
-            # name is not quoted
-            self.assertTrue(name, unicode)
+            self.assertEqual(utf_obj, name)
 
         self.stubs.Set(swobjects.swiftclient, 'put_object', put_object)
 
         swobjects.sync_object(self.orig_storage_url,
                               "token", self.dest_storage_url, "token",
-                              "contגלאָז", ("etag", "யாமறிந்த"))
+                              "contגלאָז", ("etag", utf_obj))
 
     def test_get_object_chunked(self):
         chunk_size = 32
