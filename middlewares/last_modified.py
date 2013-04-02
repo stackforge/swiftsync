@@ -25,6 +25,23 @@ from swift.common.wsgi import make_pre_authed_request
 
 class LastModifiedMiddleware(object):
     """
+    LastModified is a middleware that add a meta to a container
+    when that container and/or objects in it are modified. The meta
+    data will contains the epoch timestamp. This middleware aims
+    to be used with the synchronizer. It limits the tree parsing
+    by giving a way to know a container has been modified since the
+    last container synchronization.
+
+    Actions that lead to the container meta modification :
+    - POST/PUT on container
+    - POST/PUT/DELETE on object in it
+
+    The following shows an example of proxy-server.conf:
+    [pipeline:main]
+    pipeline = catch_errors cache tempauth last-modified proxy-server
+
+    [filter:last-modified]
+    use = egg:swift#last_modified
     """
 
     def __init__(self, app, conf):
