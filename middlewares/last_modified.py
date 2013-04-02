@@ -48,8 +48,8 @@ class LastModified(object):
     @wsgify
     def __call__(self, req):
         vrs, account, container, obj = req.split_path(1, 4, True)
-        if req.method in ('POST', 'PUT') and container or \
-         req.method == 'DELETE' and obj:
+        if (req.method in ('POST', 'PUT') and
+                container or req.method == 'DELETE' and obj):
             new_env = req.environ.copy()
             user_resp = self.req_passthrough(req)
             if is_success(user_resp.status_int):
