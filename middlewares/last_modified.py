@@ -17,9 +17,10 @@
 # under the License.
 
 import time
+
 from swift.common.utils import get_logger
-from swift.common.swob import wsgify
 from swift.common.wsgi import make_pre_authed_request
+from swift.common.swob import wsgify
 
 
 class LastModifiedMiddleware(object):
@@ -41,6 +42,7 @@ class LastModifiedMiddleware(object):
 
     [filter:last-modified]
     use = egg:swift#last_modified
+    # will show as X-Container-Meta-${key_name} for the container's header.
     key_name = Last-Modified
     """
 
@@ -48,7 +50,8 @@ class LastModifiedMiddleware(object):
         self.app = app
         self.conf = conf
         self.logger = get_logger(self.conf, log_route='last_modified')
-        self.key_name = conf.get('key_name', 'Last-Modified').replace(' ', '-')
+        self.key_name = conf.get('key_name',
+                                 'Last-Modified').strip().replace(' ', '-')
 
     def update_last_modified_meta(self, req, env):
         vrs, account, container, obj = req.split_path(1, 4, True)
@@ -62,10 +65,7 @@ class LastModifiedMiddleware(object):
                                                path=path,
                                                headers=headers,
                                                swift_source='lm')
-        return set_meta_req.get_response(self.app)
-
-    def req_passthrough(self, req):
-        return req.get_response(self.app)
+        set_meta_req.get_response(self.app)
 
     @wsgify
     def __call__(self, req):
@@ -73,11 +73,7 @@ class LastModifiedMiddleware(object):
         if (req.method in ('POST', 'PUT') and
                 container or req.method == 'DELETE' and obj):
             new_env = req.environ.copy()
-            # Keep it simple and do not check original request
-            # response status before updating the container meta
-            user_resp = self.req_passthrough(req)
             self.update_last_modified_meta(req, new_env)
-            return user_resp
         return self.app
 
 
