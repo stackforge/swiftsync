@@ -171,7 +171,6 @@ def create_objects(cnx, acc, o_amount, fmax, index_containers):
     containers_d = index_containers[acc]
     for container, details in containers_d.items():
         for i in range(o_amount):
-            logging.info("Put data for container %s" % container)
             f_object = StringIO.StringIO()
             if not i and o_amount > 1:
                 # Generate an empty object in each container whether
@@ -187,6 +186,11 @@ def create_objects(cnx, acc, o_amount, fmax, index_containers):
                            map(get_rand_str, ('meta_v_',) * 3)]
             meta = dict(zip(meta_keys, meta_values))
             data = f_object.read()
+            logging.info("Put data for container %s "
+                         "(filename: %s,\tsize: %.3f KB)" %
+                         (container,
+                         object_name.encode('ascii', 'ignore'),
+                         float(len(data))/1024))
             etag = cnx.put_object(container, object_name,
                                   data, headers=copy.copy(meta))
             f_object.close()
