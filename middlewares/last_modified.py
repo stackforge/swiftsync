@@ -18,13 +18,14 @@
 
 import time
 
-from swift.common.utils import get_logger
-from swift.common.wsgi import make_pre_authed_request
-from swift.common.swob import wsgify
+from swift.common import swob
+from swift.common import utils
+from swift.common import wsgi
 
 
 class LastModifiedMiddleware(object):
-    """
+    """This middleware update container Last Modified meta
+
     LastModified is a middleware that add a meta to a container
     when that container and/or objects in it are modified. The meta
     data will contains the epoch timestamp. This middleware aims
@@ -49,7 +50,7 @@ class LastModifiedMiddleware(object):
     def __init__(self, app, conf):
         self.app = app
         self.conf = conf
-        self.logger = get_logger(self.conf, log_route='last_modified')
+        self.logger = utils.get_logger(self.conf, log_route='last_modified')
         self.key_name = conf.get('key_name',
                                  'Last-Modified').strip().replace(' ', '-')
 
@@ -60,14 +61,14 @@ class LastModifiedMiddleware(object):
             path = path.split('/%s' % obj)[0]
         metakey = 'X-Container-Meta-%s' % self.key_name
         headers = {metakey: str(time.time())}
-        set_meta_req = make_pre_authed_request(env,
-                                               method='POST',
-                                               path=path,
-                                               headers=headers,
-                                               swift_source='lm')
+        set_meta_req = wsgi.make_pre_authed_request(env,
+                                                    method='POST',
+                                                    path=path,
+                                                    headers=headers,
+                                                    swift_source='lm')
         set_meta_req.get_response(self.app)
 
-    @wsgify
+    @swob.wsgify
     def __call__(self, req):
         vrs, account, container, obj = req.split_path(1, 4, True)
         if (req.method in ('POST', 'PUT') and
