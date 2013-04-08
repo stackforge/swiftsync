@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (C) 2013 eNovance SAS <licensing@enovance.com>
 #
@@ -17,6 +18,12 @@
 """
 Simple script to see a global swift cluster usage querying keystone server.
 """
+import argparse
+
+import keystoneclient.v2_0.client
+import swiftclient
+
+import swsync.utils
 
 # Nicer filesize reporting make it optional
 try:
@@ -24,11 +31,6 @@ try:
     prettysize = hurry.filesize.size
 except ImportError:
     prettysize = None
-
-import keystoneclient.v2_0.client
-import swiftclient
-
-import swsync.utils
 
 
 def get_swift_auth(auth_url, tenant, user, password):
@@ -53,11 +55,20 @@ def get_ks_auth_orig():
 
 
 def main():
+    parser = argparse.ArgumentParser(add_help=True)
+    parser.add_argument('-d', action='store_true',
+                        dest="dest",
+                        help='Check destination')
+    args = parser.parse_args()
+
     keystone_cnx = get_ks_auth_orig()
-    auth_url = swsync.utils.get_config('auth', 'keystone_origin')
-    korigcredential = swsync.utils.get_config(
+    if args.dest:
+        auth_url = swsync.utils.get_config('auth', 'keystone_dest')
+    else:
+        auth_url = swsync.utils.get_config('auth', 'keystone_origin')
+    credentials = swsync.utils.get_config(
         'auth', 'keystone_origin_admin_credentials')
-    tenant, admin_user, admin_password = (korigcredential.split(':'))
+    tenant, admin_user, admin_password = (credentials.split(':'))
 
     storage_url, token = get_swift_auth(
         auth_url, tenant,
