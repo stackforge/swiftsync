@@ -37,6 +37,7 @@ import string
 import StringIO
 
 from swiftclient import client as sclient
+from swiftclient.client import ClientException
 
 import eventlet
 
@@ -186,17 +187,22 @@ def create_objects(cnx, acc, o_amount, fmax, index_containers):
                            map(get_rand_str, ('meta_v_',) * 3)]
             meta = dict(zip(meta_keys, meta_values))
             data = f_object.read()
-            logging.info("Put data for container %s "
-                         "(filename: %s,\tsize: %.3f KB)" %
-                         (container,
-                         object_name.encode('ascii', 'ignore'),
-                         float(len(data))/1024))
-            etag = cnx.put_object(container, object_name,
-                                  data, headers=copy.copy(meta))
             f_object.close()
-            obj_info = {'object_info':
-                        (object_name, etag, len(data)), 'meta': meta}
-            containers_d[container]['objects'].append(obj_info)
+            try:
+                etag = cnx.put_object(container, object_name,
+                                      data, headers=copy.copy(meta))
+                logging.info("Put data for container %s "
+                             "(filename: %s,\tsize: %.3f KB)" %
+                             (container,
+                             object_name.encode('ascii', 'ignore'),
+                             float(len(data))/1024))
+                obj_info = {'object_info':
+                            (object_name, etag, len(data)), 'meta': meta}
+                containers_d[container]['objects'].append(obj_info)
+            except ClientException:
+                logging.warning('Unable to put object %s in container %s' % (
+                                object_name.encode('ascii', 'ignore'),
+                                container.encode('ascii', 'ignore')))
 
 
 def create_containers(cnx, acc, c_amount, index_containers=None):
@@ -214,8 +220,12 @@ def create_containers(cnx, acc, c_amount, index_containers=None):
         meta = dict(zip(meta_keys, meta_values))
         logging.info("Create container %s" %
                      container_name.encode('ascii', 'ignore'))
-        cnx.put_container(container_name, headers=copy.copy(meta))
-        containers_d[container_name] = {'meta': meta, 'objects': []}
+        try:
+            cnx.put_container(container_name, headers=copy.copy(meta))
+            containers_d[container_name] = {'meta': meta, 'objects': []}
+        except ClientException:
+            logging.warning("Unable to create container %s" %
+                            container_name.encode('ascii', 'ignore'))
 
 
 def fill_swift(pool, created_account, c_amount,

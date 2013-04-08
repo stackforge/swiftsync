@@ -18,13 +18,17 @@
 import eventlet
 import swiftclient
 
-from swsync.utils import get_config
+from fakes import FakeKSClient
+from fakes import FakeKSUser
+from fakes import FakeSWConnection
+
+from tests.units import base
+
 from swsync import filler
-import base as test_base
-from fakes import FakeSWConnection, FakeKSClient, FakeKSUser
+from swsync import utils
 
 
-class TestFiller(test_base.TestCase):
+class TestFiller(base.TestCase):
     def setUp(self):
         super(TestFiller, self).setUp()
         self._stubs()
@@ -34,7 +38,7 @@ class TestFiller(test_base.TestCase):
                        FakeSWConnection)
 
     def get_connection(self, *args):
-        return swiftclient.client.Connection(get_config(
+        return swiftclient.client.Connection(utils.get_config(
                                              'auth', 'keystone_origin'),
                                              'test', 'password',
                                              tenant_name='test')
@@ -55,6 +59,25 @@ class TestFiller(test_base.TestCase):
         meta_amount = len(return_dict_ref['test'].values())
         self.assertEqual(meta_amount, 3)
 
+    def test_create_containers_fail(self):
+        get_containers_created = []
+        return_dict_ref = {}
+        self.attempts = 0
+
+        def put_container(*args, **kwargs):
+            if self.attempts == 0:
+                self.attempts += 1
+                raise swiftclient.client.ClientException('Fake err msg')
+            else:
+                self.attempts += 1
+                get_containers_created.append(args[1])
+
+        self.stubs.Set(FakeSWConnection, 'put_container', put_container)
+        cnx = self.get_connection()
+        filler.create_containers(cnx, 'test', 3, return_dict_ref)
+
+        self.assertEqual(len(get_containers_created), 2)
+
     def test_create_objects(self):
         get_object_created = []
         return_dict_ref = {'test': {'container_a': {'objects': []},
@@ -72,6 +95,27 @@ class TestFiller(test_base.TestCase):
         objects_cb = return_dict_ref['test']['container_b']['objects']
         self.assertEqual(len(objects_ca), 2)
         self.assertEqual(len(objects_cb), 2)
+
+    def test_create_objects_fail(self):
+        get_object_created = []
+        return_dict_ref = {'test': {'container_a': {'objects': []}}}
+        self.attempts = 0
+
+        def put_object(*args, **kwargs):
+            if self.attempts == 0:
+                self.attempts += 1
+                raise swiftclient.client.ClientException('Fake err msg')
+            else:
+                self.attempts += 1
+                get_object_created.append(args[1:])
+
+        self.stubs.Set(FakeSWConnection,
+                       'put_object',
+                       put_object)
+        cnx = self.get_connection()
+        filler.create_objects(cnx, 'test', 2, 2048, return_dict_ref)
+        objects_ca = return_dict_ref['test']['container_a']['objects']
+        self.assertEqual(len(objects_ca), 1)
 
     def test_fill_swift(self):
         self.cont_cnt = 0
@@ -91,7 +135,7 @@ class TestFiller(test_base.TestCase):
         self.stubs.Set(filler, 'create_objects', create_objects)
         self.stubs.Set(filler, 'create_containers', create_containers)
 
-        concurrency = int(get_config('filler', 'concurrency'))
+        concurrency = int(utils.get_config('filler', 'concurrency'))
         pool = eventlet.GreenPool(concurrency)
 
         created = {('account1', 'account1_id'): ['test', 'test_id', 'role_id'],
@@ -111,7 +155,8 @@ class TestFiller(test_base.TestCase):
         def add_user_role(*args, **kargs):
             self.role_cnt += 1
 
-        co = get_config('auth', 'keystone_origin_admin_credentials').split(':')
+        co = utils.get_config('auth',
+                              'keystone_origin_admin_credentials').split(':')
         tenant_name, username, password = co
         client = FakeKSClient()
         client.roles.add_user_role = add_user_role
@@ -130,7 +175,7 @@ class TestFiller(test_base.TestCase):
 
         self.stubs.Set(filler, 'create_swift_user', create_swift_user)
 
-        concurrency = int(get_config('filler', 'concurrency'))
+        concurrency = int(utils.get_config('filler', 'concurrency'))
         pile = eventlet.GreenPile(concurrency)
         client = FakeKSClient()
         filler.create_swift_account(client, pile, 1, 1, self.ret_index)
