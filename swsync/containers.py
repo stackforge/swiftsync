@@ -16,19 +16,20 @@
 # under the License.
 import logging
 
-import swiftclient
 import eventlet
+import swiftclient
 
-from swsync.objects import sync_object, delete_object
-from swsync.utils import get_config
+import swsync.objects
+import swsync.utils
 
 
 class Containers(object):
     """Containers sync."""
     def __init__(self):
-        self.max_gthreads = int(get_config("sync", "max_gthreads"))
-        self.sync_object = sync_object
-        self.delete_object = delete_object
+        self.max_gthreads = int(swsync.utils.get_config("sync",
+                                                        "max_gthreads"))
+        self.sync_object = swsync.objects.sync_object
+        self.delete_object = swsync.objects.delete_object
 
     def delete_container(self, dest_storage_cnx, dest_token,
                          orig_containers,

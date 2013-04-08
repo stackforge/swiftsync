@@ -14,9 +14,9 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-import os
 import ConfigParser
 import logging
+import os
 
 
 CONFIG = None
@@ -61,7 +61,7 @@ def parse_ini(inicfg=None):
 
 
 def get_config(section, option, default=None, _config=None):
-    """Get section/option from ConfigParser or print default if specified"""
+    """Get section/option from ConfigParser or print default if specified."""
     global CONFIG
     if _config:
         CONFIG = _config

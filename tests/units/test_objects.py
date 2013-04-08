@@ -15,6 +15,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 import swiftclient
+import swift
 from eventlet import sleep, Timeout
 
 import base as test_base
@@ -67,7 +68,8 @@ class TestObject(test_base.TestCase):
 
     def test_get_object_not_found(self):
         new_connect = fake_http_connect(404)
-        self.stubs.Set(swobjects, 'http_connect_raw', new_connect)
+        self.stubs.Set(swift.common.bufferedhttp,
+                       'http_connect_raw', new_connect)
 
         self.assertRaises(swiftclient.ClientException,
                           swobjects.get_object,
@@ -76,12 +78,14 @@ class TestObject(test_base.TestCase):
     def test_sync_object(self):
         body = ("X" * 3) * 1024
         new_connect = fake_http_connect(200, body)
-        self.stubs.Set(swobjects, 'http_connect_raw', new_connect)
+        self.stubs.Set(swift.common.bufferedhttp,
+                       'http_connect_raw', new_connect)
 
         def put_object(url, name=None, headers=None, contents=None):
             self.assertEqual('obj1', name)
             self.assertIn('x-auth-token', headers)
-            self.assertIsInstance(contents, swobjects._Iter2FileLikeObject)
+            self.assertIsInstance(contents,
+                                  swift.container.sync._Iter2FileLikeObject)
             contents_read = contents.read()
             self.assertEqual(len(contents_read), len(body))
 
@@ -95,7 +99,8 @@ class TestObject(test_base.TestCase):
         utf_obj = "யாமறிந்த"
         body = "FOO"
         new_connect = fake_http_connect(200, body)
-        self.stubs.Set(swobjects, 'http_connect_raw', new_connect)
+        self.stubs.Set(swift.common.bufferedhttp,
+                       'http_connect_raw', new_connect)
 
         def put_object(url, name=None, headers=None, contents=None):
             # Container is Quoted
@@ -114,7 +119,8 @@ class TestObject(test_base.TestCase):
         body = ("X" * expected_chunk_time) * chunk_size
 
         new_connect = fake_http_connect(200, body)
-        self.stubs.Set(swobjects, 'http_connect_raw', new_connect)
+        self.stubs.Set(swift.common.bufferedhttp,
+                       'http_connect_raw', new_connect)
 
         headers, gen = swobjects.get_object(self.orig_storage_url,
                                             "token", "cont1", "obj1",
@@ -126,7 +132,8 @@ class TestObject(test_base.TestCase):
 
     def test_get_object_full(self):
         new_connect = fake_http_connect(200, body='foobar')
-        self.stubs.Set(swobjects, 'http_connect_raw', new_connect)
+        self.stubs.Set(swift.common.bufferedhttp,
+                       'http_connect_raw', new_connect)
 
         headers, body = swobjects.get_object(self.orig_storage_url,
                                              "token", "cont1", "obj1",
@@ -136,7 +143,8 @@ class TestObject(test_base.TestCase):
     def test_get_headers(self):
         headers = {'X-FOO': 'BaR'}.items()
         new_connect = fake_http_connect(200, headers=headers)
-        self.stubs.Set(swobjects, 'http_connect_raw', new_connect)
+        self.stubs.Set(swift.common.bufferedhttp,
+                       'http_connect_raw', new_connect)
 
         headers, gen = swobjects.get_object(self.orig_storage_url,
                                             "token",
@@ -147,7 +155,8 @@ class TestObject(test_base.TestCase):
 
     def test_get_object_over_conn_timeout(self):
         new_connect = fake_http_connect(200, connect_waitfor=2)
-        self.stubs.Set(swobjects, 'http_connect_raw', new_connect)
+        self.stubs.Set(swift.common.bufferedhttp,
+                       'http_connect_raw', new_connect)
         self.assertRaises(Timeout,
                           swobjects.get_object,
                           self.orig_storage_url, "token", "cont1", "obj1",
@@ -155,7 +164,8 @@ class TestObject(test_base.TestCase):
 
     def test_get_object_over_resp_timeout(self):
         new_connect = fake_http_connect(200, resp_waitfor=2)
-        self.stubs.Set(swobjects, 'http_connect_raw', new_connect)
+        self.stubs.Set(swift.common.bufferedhttp,
+                       'http_connect_raw', new_connect)
         self.assertRaises(Timeout,
                           swobjects.get_object,
                           self.orig_storage_url, "token", "cont1", "obj1",

@@ -15,11 +15,11 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-import sys
 import optparse
+import sys
 
 import swsync.accounts
-from swsync.utils import parse_ini, ConfigurationError, set_logging
+import swsync.utils
 
 
 class Main(object):
@@ -36,15 +36,15 @@ class Main(object):
             help='Number of containers to distribute objects among')
         self.options, args = parser.parse_args()
         if args:
-            conf = parse_ini(args[0])
+            conf = swsync.utils.parse_ini(args[0])
         else:
             try:
-                conf = parse_ini()
-            except(ConfigurationError):
+                conf = swsync.utils.parse_ini()
+            except(swsync.utils.ConfigurationError):
                 parser.print_help()
                 sys.exit(1)
 
-        set_logging(self.options.log_level.lower())
+        swsync.utils.set_logging(self.options.log_level.lower())
         #beurk
         swsync.utils.CONFIG = conf
         swsync.accounts.main()
