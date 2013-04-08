@@ -20,7 +20,8 @@
 import unittest
 
 from middlewares import last_modified as middleware
-from swift.common.swob import Response, Request
+from swift.common.swob import Request
+from swift.common.swob import Response
 
 
 class FakeApp(object):
@@ -66,7 +67,7 @@ class TestLastModifiedMiddleware(unittest.TestCase):
             self.called = True
             return FakeRequest()
 
-        middleware.make_pre_authed_request = make_pre_authed_request
+        middleware.wsgi.make_pre_authed_request = make_pre_authed_request
         req = self._make_request('cont',
                                  environ={'REQUEST_METHOD': 'PUT'})
         req.get_response(self.test_default)
@@ -79,7 +80,7 @@ class TestLastModifiedMiddleware(unittest.TestCase):
             self.called = True
             return FakeRequest()
 
-        middleware.make_pre_authed_request = make_pre_authed_request
+        middleware.wsgi.make_pre_authed_request = make_pre_authed_request
         req = self._make_request('cont',
                                  environ={'REQUEST_METHOD': 'POST'})
         req.get_response(self.test_default)
@@ -92,7 +93,7 @@ class TestLastModifiedMiddleware(unittest.TestCase):
             self.called = True
             return FakeRequest()
 
-        middleware.make_pre_authed_request = make_pre_authed_request
+        middleware.wsgi.make_pre_authed_request = make_pre_authed_request
         req = self._make_request('cont',
                                  environ={'REQUEST_METHOD': 'DELETE'})
         req.get_response(self.test_default)
@@ -105,7 +106,7 @@ class TestLastModifiedMiddleware(unittest.TestCase):
             self.called = True
             return FakeRequest()
 
-        middleware.make_pre_authed_request = make_pre_authed_request
+        middleware.wsgi.make_pre_authed_request = make_pre_authed_request
         req = self._make_request('cont',
                                  environ={'REQUEST_METHOD': 'GET'})
         req.get_response(self.test_default)
@@ -123,7 +124,7 @@ class TestLastModifiedMiddleware(unittest.TestCase):
             self.called = True
             return FakeRequest()
 
-        middleware.make_pre_authed_request = make_pre_authed_request
+        middleware.wsgi.make_pre_authed_request = make_pre_authed_request
         req = self._make_request('cont/obj',
                                  environ={'REQUEST_METHOD': 'POST'})
         req.get_response(self.test_default)
@@ -136,7 +137,7 @@ class TestLastModifiedMiddleware(unittest.TestCase):
             self.called = True
             return FakeRequest()
 
-        middleware.make_pre_authed_request = make_pre_authed_request
+        middleware.wsgi.make_pre_authed_request = make_pre_authed_request
         req = self._make_request('cont/obj',
                                  environ={'REQUEST_METHOD': 'PUT'})
         req.get_response(self.test_default)
@@ -149,7 +150,7 @@ class TestLastModifiedMiddleware(unittest.TestCase):
             self.called = True
             return FakeRequest()
 
-        middleware.make_pre_authed_request = make_pre_authed_request
+        middleware.wsgi.make_pre_authed_request = make_pre_authed_request
         req = self._make_request('cont/obj',
                                  environ={'REQUEST_METHOD': 'DELETE'})
         req.get_response(self.test_default)
