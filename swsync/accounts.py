@@ -14,16 +14,16 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-import time
 import datetime
 import logging
+import time
 
-import swiftclient
 import dateutil.relativedelta
 import keystoneclient.v2_0.client
+import swiftclient
 
-from utils import get_config
 import swsync.containers
+from utils import get_config
 
 
 class Accounts(object):
@@ -33,7 +33,7 @@ class Accounts(object):
         self.container_cls = swsync.containers.Containers()
 
     def get_swift_auth(self, auth_url, tenant, user, password):
-        """Get swift connexion from args"""
+        """Get swift connexion from args."""
         return swiftclient.client.Connection(
             auth_url,
             '%s:%s' % (tenant, user),
@@ -41,7 +41,7 @@ class Accounts(object):
             auth_version=2).get_auth()
 
     def get_ks_auth_orig(self):
-        """Get keystone cnx from config"""
+        """Get keystone cnx from config."""
         orig_auth_url = get_config('auth', 'keystone_origin')
         cfg = get_config('auth', 'keystone_origin_admin_credentials')
         (tenant_name, username, password) = cfg.split(':')
