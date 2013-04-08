@@ -24,6 +24,7 @@ name = 'swsync'
 
 requires = setup.parse_requirements()
 depend_links = setup.parse_dependency_links()
+entry_point = '%s.middlewares:last_modified' % (name)
 
 setuptools.setup(
     name=name,
@@ -52,4 +53,7 @@ setuptools.setup(
         'bin/swfiller',
         'bin/swsync',
     ],
+    entry_points={
+        'paste.filter_factory': ['last_modified=%s' % entry_point]
+    }
 )
