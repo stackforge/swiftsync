@@ -16,7 +16,8 @@ from swsync import utils
 
 
 def main():
-    parser = argparse.ArgumentParser(prog='swift-filler', add_help=True)
+    parser = argparse.ArgumentParser(prog='swift-filler',
+                                     add_help=True)
     parser.add_argument('--delete',
                         action='store_true',
                         help='Suppress created accounts/users')
@@ -42,9 +43,27 @@ def main():
                         dest='log_level',
                         default='info',
                         help='Specify the log level')
+    parser.add_argument('--config',
+                        dest='config',
+                        help='Optional configuration file path')
     args = parser.parse_args()
 
     utils.set_logging(args.log_level)
+
+    if args.config and os.path.isfile(args.config):
+        try:
+            conf = utils.parse_ini(args.config)
+            logging.info('Unable to parse provided conf file')
+        except Exception:
+            pass
+    else:
+        try:
+            conf = utils.parse_ini()
+        except(utils.ConfigurationError):
+            parser.print_help()
+            sys.exit(1)
+
+    utils.CONFIG = conf
 
     if not args.create and not args.delete:
         parser.print_help()
