@@ -16,6 +16,7 @@
 # under the License.
 import os
 import ConfigParser
+import logging
 
 
 CONFIG = None
@@ -25,6 +26,23 @@ INIFILE = os.path.abspath(os.path.join(curdir, '..', 'etc', "config.ini"))
 
 class ConfigurationError(Exception):
     pass
+
+
+def set_logging(level):
+    logger = logging.getLogger()
+    logger.setLevel({
+        'debug': logging.DEBUG,
+        'info': logging.INFO,
+        'warning': logging.WARNING,
+        'error': logging.ERROR,
+        'critical': logging.CRITICAL}.get(
+            level.lower()
+        ))
+    loghandler = logging.StreamHandler()
+    logger.addHandler(loghandler)
+    logger = logging.LoggerAdapter(logger, 'swfiller')
+    logformat = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    loghandler.setFormatter(logformat)
 
 
 def parse_ini(inicfg=None):

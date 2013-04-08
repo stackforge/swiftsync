@@ -16,31 +16,15 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 import sys
-import logging
 import optparse
 
 import swsync.accounts
-from swsync.utils import parse_ini, ConfigurationError
+from swsync.utils import parse_ini, ConfigurationError, set_logging
+
 
 class Main(object):
     def __init__(self):
         self.options = {}
-
-    def set_logging(self):
-        logger = logging.getLogger()
-        logger.setLevel({
-            'debug': logging.DEBUG,
-            'info': logging.INFO,
-            'warning': logging.WARNING,
-            'error': logging.ERROR,
-            'critical': logging.CRITICAL}.get(
-                self.options.log_level.lower()
-            ))
-        loghandler = logging.StreamHandler()
-        logger.addHandler(loghandler)
-        logger = logging.LoggerAdapter(logger, 'swsync')
-        logformat = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-        loghandler.setFormatter(logformat)
 
     def main(self):
         usage = "usage: %prog [OPTIONS] [CONF_FILE]"
@@ -60,7 +44,7 @@ class Main(object):
                 parser.print_help()
                 sys.exit(1)
 
-        self.set_logging()
+        set_logging(self.options.log_level.lower())
         #beurk
         swsync.utils.CONFIG = conf
         swsync.accounts.main()

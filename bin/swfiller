@@ -15,23 +15,6 @@ from swsync import filler
 from swsync import utils
 
 
-def set_logging(level):
-    logger = logging.getLogger()
-    logger.setLevel({
-        'debug': logging.DEBUG,
-        'info': logging.INFO,
-        'warning': logging.WARNING,
-        'error': logging.ERROR,
-        'critical': logging.CRITICAL}.get(
-            level.lower()
-        ))
-    loghandler = logging.StreamHandler()
-    logger.addHandler(loghandler)
-    logger = logging.LoggerAdapter(logger, 'swfiller')
-    logformat = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    loghandler.setFormatter(logformat)
-
-
 def main():
     parser = argparse.ArgumentParser(prog='swift-filler', add_help=True)
     parser.add_argument('--delete',
@@ -61,7 +44,7 @@ def main():
                         help='Specify the log level')
     args = parser.parse_args()
 
-    set_logging(args.log_level)
+    utils.set_logging(args.log_level)
 
     if not args.create and not args.delete:
         parser.print_help()
