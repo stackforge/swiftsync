@@ -25,15 +25,16 @@
 # Read pickled index file (index_path) to process a deletion
 # of objects/containers store in swift for each account then delete
 # accounts.
+
 import os
 import sys
 
+import copy
+import logging
 import pickle
 import random
 import string
-
-from StringIO import StringIO
-from copy import copy
+import StringIO
 
 from swiftclient import client as sclient
 
@@ -100,16 +101,16 @@ def create_swift_account(client, pile,
         account = get_rand_str(mode='account_')
         # Create a tenant. In swift this is an account
         account_id = client.tenants.create(account).id
-        print 'Account created %s' % account
+        logging.info('Account created %s' % account)
         r = create_swift_user(client, account, account_id, user_amount)
-        print 'Users created %s in account %s' % (str(r), account)
+        logging.info('Users created %s in account %s' % (str(r), account))
         return account, account_id, r
     created = {}
     # Spawn a greenlet for each account
     i = 0
     for i in range(account_amount):
         i += 1
-        print "[Keystone Start OPs %s/%s]" % (i, account_amount)
+        logging.info("[Keystone Start OPs %s/%s]" % (i, account_amount))
         pile.spawn(_create_account, user_amount)
     for account, account_id, ret in pile:
         index[(account, account_id)] = ret
@@ -130,8 +131,9 @@ def delete_account_content(acc, user):
                         in container_infos[1]]
         # Delete objects
         for obj in object_names:
-            print "Deleting object %s in container %s for account %s" % (
-                obj, container, str(acc))
+            logging.info("\
+                    Deleting object %s in container %s for account %s" %
+                        (obj, container, str(acc)))
             cnx.delete_object(container, obj)
 
 
@@ -140,9 +142,9 @@ def delete_account(client, user_id, acc):
     if not isinstance(user_id, list):
         user_id = (user_id,)
     for uid in user_id:
-        print "Delete user with id : %s" % uid
+        logging.info("Delete user with id : %s" % uid)
         client.users.delete(uid)
-    print "Delete account %s" % account_id
+    logging.info("Delete account %s" % account_id)
     client.tenants.delete(account_id)
 
 
@@ -169,8 +171,8 @@ def create_objects(cnx, acc, o_amount, fmax, index_containers):
     containers_d = index_containers[acc]
     for container, details in containers_d.items():
         for i in range(o_amount):
-            print "Put data for container %s" % container
-            f_object = StringIO()
+            logging.info("Put data for container %s" % container)
+            f_object = StringIO.StringIO()
             if not i and o_amount > 1:
                 # Generate an empty object in each container whether
                 # we create more than one object
@@ -186,7 +188,7 @@ def create_objects(cnx, acc, o_amount, fmax, index_containers):
             meta = dict(zip(meta_keys, meta_values))
             data = f_object.read()
             etag = cnx.put_object(container, object_name,
-                                  data, headers=copy(meta))
+                                  data, headers=copy.copy(meta))
             f_object.close()
             obj_info = {'object_info':
                         (object_name, etag, len(data)), 'meta': meta}
@@ -206,8 +208,9 @@ def create_containers(cnx, acc, c_amount, index_containers=None):
         meta_values = [customize(m, (i + 1) % 3) for m in
                        map(get_rand_str, ('meta_v_',) * 3)]
         meta = dict(zip(meta_keys, meta_values))
-        print "Create container %s" % container_name.encode('ascii', 'ignore')
-        cnx.put_container(container_name, headers=copy(meta))
+        logging.info("Create container %s" %
+                     container_name.encode('ascii', 'ignore'))
+        cnx.put_container(container_name, headers=copy.copy(meta))
         containers_d[container_name] = {'meta': meta, 'objects': []}
 
 
@@ -222,8 +225,8 @@ def fill_swift(pool, created_account, c_amount,
     i = 0
     for acc, users in created_account.items():
         i += 1
-        print "[Start Swift Account OPs %s/%s]" % \
-            (i, len(created_account.keys()))
+        logging.info("[Start Swift Account OPs %s/%s]" %
+                     (i, len(created_account.keys())))
         pool.spawn_n(_fill_swift_job,
                      acc, users,
                      c_amount, o_amount,
@@ -236,8 +239,8 @@ def load_index():
     if os.path.isfile(index_path):
         try:
             index = pickle.load(file(index_path))
-            print "Load previous index for account %s" % index_path
-        except:
+            logging.info("Load previous index for account %s" % index_path)
+        except Exception:
             index = {}
     else:
         index = {}
@@ -249,8 +252,8 @@ def load_containers_index():
     if os.path.isfile(index_containers_path):
         try:
             index = pickle.load(file(index_containers_path))
-            print "Load previous index for  %s" % index_containers_path
-        except:
+            logging.info("Load previous index for  %s" % index_containers_path)
+        except Exception:
             index = {}
     else:
         index = {}
