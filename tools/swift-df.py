@@ -25,6 +25,8 @@ import swiftclient
 
 import swsync.utils
 
+MAX_RETRIES = 10
+
 # Nicer filesize reporting make it optional
 try:
     import hurry.filesize
@@ -81,7 +83,14 @@ def main():
     total_objects = 0
     for tenant in keystone_cnx.tenants.list():
         tenant_storage_url = bare_storage_url + tenant.id
-        head = swiftclient.head_account(tenant_storage_url, token)
+        cnx = swiftclient.client.Connection(preauthurl=tenant_storage_url,
+                                            preauthtoken=token,
+                                            retries=MAX_RETRIES)
+        try:
+            head = cnx.head_account()
+        # TOO BUSY
+        except(swiftclient.client.ClientException):
+            continue
         total_size += int(head['x-account-bytes-used'])
         total_containers += int(head['x-account-container-count'])
         total_objects += int(head['x-account-object-count'])
