@@ -15,6 +15,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import argparse
 import sys
 import time
 
@@ -28,17 +29,25 @@ MAX_RETRIES = 5
 
 def main():
     """Delete some accounts."""
-    if len(sys.argv) != 2:
-        print "%s NUMBER_OF_ACCOUNT_TO_DELETE" % (sys.argv[0])
-        sys.exit(1)
-    raw_input("Are you sure you want to delete? Control-C if you don't")
-    time.sleep(5)
+    parser = argparse.ArgumentParser(add_help=True)
+    parser.add_argument('-d', action='store_true',
+                        dest="dest",
+                        help='Check destination')
+    parser.add_argument('number', nargs=1, type=int)
 
-    number = int(sys.argv[1])
+    args = parser.parse_args()
+
+    print "Are you sure you want to delete? Control-C if you don't"
+    time.sleep(5)
+    number = args.number[0]
+
     credentials = swsync.utils.get_config('auth',
                                           'keystone_origin_admin_credentials')
     (tenant_name, username, password) = credentials.split(':')
-    auth_url = swsync.utils.get_config('auth', 'keystone_origin')
+    if args.dest:
+        auth_url = swsync.utils.get_config('auth', 'keystone_dest')
+    else:
+        auth_url = swsync.utils.get_config('auth', 'keystone_origin')
     keystone_cnx = keystoneclient.v2_0.client.Client(auth_url=auth_url,
                                                      username=username,
                                                      password=password,
@@ -59,7 +68,9 @@ def main():
         _, containers = swiftcnx.get_account()
         for cont in containers:
             _, objects = swiftcnx.get_container(cont['name'])
+            print "deleting %s" % (cont['name'])
             for obj in objects:
+                print "deleting %s/%s" % (cont['name'], obj['name'])
                 swiftcnx.delete_object(cont['name'], obj['name'])
             swiftcnx.delete_container(cont['name'])
 
