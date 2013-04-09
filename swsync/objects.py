@@ -14,6 +14,8 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import logging
+
 import eventlet
 import swift.common.bufferedhttp
 import swift.common.http
@@ -58,6 +60,7 @@ def get_object(storage_url, token,
 
     if not swift.common.http.is_success(resp.status):
         resp.read()
+        #TODO: logging
         raise swiftclient.ClientException(
             'status %s %s' % (resp.status, resp.reason))
 
@@ -105,6 +108,10 @@ def sync_object(orig_storage_url, orig_token, dest_storage_url,
     post_headers['x-auth-token'] = dest_token
     sync_to = dest_storage_url + "/" + container_name
     iterlike = swift.container.sync._Iter2FileLikeObject
-    swiftclient.put_object(sync_to, name=object_name,
-                           headers=post_headers,
-                           contents=iterlike(orig_body))
+    try:
+        swiftclient.put_object(sync_to, name=object_name,
+                               headers=post_headers,
+                               contents=iterlike(orig_body))
+    except(swiftclient.ClientException), e:
+        logging.info("error sync object: %s, %s" % (
+                     object_name, e.http_reason))

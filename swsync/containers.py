@@ -41,9 +41,15 @@ class Containers(object):
         pool = eventlet.GreenPool(size=self.max_gthreads)
         pile = eventlet.GreenPile(pool)
         for container in delete_diff:
-            dest_container_stats, dest_objects = swiftclient.get_container(
-                None, dest_token, container, http_conn=dest_storage_cnx,
-            )
+            try:
+                dest_container_stats, dest_objects = swiftclient.get_container(
+                    None, dest_token, container, http_conn=dest_storage_cnx,
+                )
+            except(swiftclient.client.ClientException), e:
+                logging.info("error getting container: %s, %s" % (
+                    container, e.http_reason))
+                continue
+
             for obj in dest_objects:
                 logging.info("deleting obj: %s ts:%s", obj['name'],
                              obj['last_modified'])
@@ -62,27 +68,42 @@ class Containers(object):
              orig_token, dest_storage_cnx, dest_storage_url, dest_token,
              container_name):
 
-        orig_container_stats, orig_objects = swiftclient.get_container(
-            None, orig_token, container_name, http_conn=orig_storage_cnx,
-        )
+        try:
+            orig_container_stats, orig_objects = swiftclient.get_container(
+                None, orig_token, container_name, http_conn=orig_storage_cnx,
+            )
+        except(swiftclient.client.ClientException), e:
+            logging.info("ERROR: getting container: %s, %s" % (
+                container_name, e.http_reason))
+            return
         try:
             swiftclient.head_container(
                 "", dest_token, container_name, http_conn=dest_storage_cnx
             )
-        except(swiftclient.client.ClientException):
+        except(swiftclient.client.ClientException), e:
             container_headers = orig_container_stats.copy()
             for h in ('x-container-object-count', 'x-trans-id',
                       'x-container-bytes-used'):
                 del container_headers[h]
             p = dest_storage_cnx[0]
             url = "%s://%s%s" % (p.scheme, p.netloc, p.path)
-            swiftclient.put_container(url,
-                                      dest_token, container_name,
-                                      headers=container_headers)
+            try:
+                swiftclient.put_container(url,
+                                          dest_token, container_name,
+                                          headers=container_headers)
+            except(swiftclient.client.ClientException), e:
+                logging.info("ERROR: creating container: %s, %s" % (
+                    container_name, e.http_reason))
+                return
 
-        dest_container_stats, dest_objects = swiftclient.get_container(
-            None, dest_token, container_name, http_conn=dest_storage_cnx,
-        )
+        try:
+            dest_container_stats, dest_objects = swiftclient.get_container(
+                None, dest_token, container_name, http_conn=dest_storage_cnx,
+            )
+        except(swiftclient.client.ClientException), e:
+            logging.info("ERROR: creating container: %s, %s" % (
+                container_name, e.http_reason))
+            return
 
         set1 = set((x['last_modified'], x['name']) for x in orig_objects)
         set2 = set((x['last_modified'], x['name']) for x in dest_objects)
