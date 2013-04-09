@@ -61,6 +61,10 @@ def main():
     parser.add_argument('-d', action='store_true',
                         dest="dest",
                         help='Check destination')
+    parser.add_argument('-r', action='store_true',
+                        dest="raw_output",
+                        help='No human output')
+ 
     args = parser.parse_args()
 
     keystone_cnx = get_ks_auth_orig()
@@ -95,7 +99,8 @@ def main():
         total_containers += int(head['x-account-container-count'])
         total_objects += int(head['x-account-object-count'])
 
-    size = prettysize and prettysize(total_size) or total_size
+    size = (prettysize and not args.raw_output) and \
+        prettysize(total_size) or total_size
     print "Total size: %s" % (size)
     print "Total containers: %d" % (total_containers)
     print "Total objects: %d" % (total_objects)
