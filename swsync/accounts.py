@@ -57,15 +57,20 @@ class Accounts(object):
         orig_storage_cnx = swiftclient.http_connection(orig_storage_url)
         dest_storage_cnx = swiftclient.http_connection(dest_storage_url)
 
-        orig_stats, orig_containers = (
-            swiftclient.get_account(None, orig_token,
-                                    http_conn=orig_storage_cnx,
-                                    full_listing=True))
+        try:
+            orig_stats, orig_containers = (
+                swiftclient.get_account(None, orig_token,
+                                        http_conn=orig_storage_cnx,
+                                        full_listing=True))
 
-        dest_stats, dest_containers = (
-            swiftclient.get_account(None, dest_token,
-                                    http_conn=dest_storage_cnx,
-                                    full_listing=True))
+            dest_stats, dest_containers = (
+                swiftclient.get_account(None, dest_token,
+                                        http_conn=dest_storage_cnx,
+                                        full_listing=True))
+        except(swiftclient.client.ClientException), e:
+                logging.info("error getting containeaccount: %s, %s" % (
+                    orig_storage_url, e.http_reason))
+                return
         if int(dest_stats['x-account-container-count']) > \
                 int(orig_stats['x-account-container-count']):
             self.container_cls.delete_container(dest_storage_cnx,
