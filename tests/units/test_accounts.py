@@ -14,6 +14,8 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import logging
+
 import keystoneclient
 import swiftclient
 
@@ -97,3 +99,48 @@ class TestAccount(tests.units.base.TestCase):
         default_container_list = sorted(x[0]['name']
                                         for x in fakes.CONTAINERS_LIST)
         self.assertEquals(ret_container_list, default_container_list)
+
+    def test_sync_exception_get_account(self):
+        called = []
+
+        def fake_info(self, *args):
+            called.append("called")
+
+        def get_account(*args, **kwargs):
+            raise swiftclient.client.ClientException("TESTED")
+        self.stubs.Set(swiftclient, 'get_account', get_account)
+        self.stubs.Set(logging, 'info', fake_info)
+        self.accounts_cls.sync_account("http://foo", "token",
+                                       "http://bar", "token2")
+        self.assertTrue(called)
+
+    def test_sync_account_detect_we_need_to_delete_some_stuff(self):
+        # I should get my lazy ass up and just use self.mox stuff
+        ret = []
+        called = []
+
+        class Containers():
+            def delete_container(*args, **kwargs):
+                called.append("TESTED")
+
+            def sync(*args, **kwargs):
+                pass
+
+        self.accounts_cls.container_cls = Containers()
+
+        def get_account(*args, **kwargs):
+            #ORIG
+            if len(ret) == 0:
+                ret.append("TESTED")
+                return ({'x-account-container-count': 1},
+                        [{'name': 'foo'}])
+            #DEST
+            else:
+                return ({'x-account-container-count': 2},
+                        [{'name': 'foo', 'name': 'bar'}])
+
+            raise swiftclient.client.ClientException("TESTED")
+        self.stubs.Set(swiftclient, 'get_account', get_account)
+        self.accounts_cls.sync_account("http://foo", "token",
+                                       "http://bar", "token2")
+        self.assertTrue(called)
