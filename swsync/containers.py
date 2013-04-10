@@ -26,8 +26,9 @@ import swsync.utils
 class Containers(object):
     """Containers sync."""
     def __init__(self):
-        self.max_gthreads = int(swsync.utils.get_config("sync",
-                                                        "max_gthreads"))
+        self.concurrency = int(swsync.utils.get_config(
+                               "concurrency",
+                               "sync_swift_client_concurrency"))
         self.sync_object = swsync.objects.sync_object
         self.delete_object = swsync.objects.delete_object
 
@@ -38,7 +39,7 @@ class Containers(object):
         set2 = set((x['name']) for x in dest_containers)
         delete_diff = set2 - set1
 
-        pool = eventlet.GreenPool(size=self.max_gthreads)
+        pool = eventlet.GreenPool(size=self.concurrency)
         pile = eventlet.GreenPile(pool)
         for container in delete_diff:
             try:
@@ -115,7 +116,7 @@ class Containers(object):
         if not diff and not delete_diff:
             return
 
-        pool = eventlet.GreenPool(size=self.max_gthreads)
+        pool = eventlet.GreenPool(size=self.concurrency)
         pile = eventlet.GreenPile(pool)
 
         for obj in diff:
