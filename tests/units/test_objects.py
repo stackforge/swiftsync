@@ -14,13 +14,13 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-import swiftclient
+import eventlet
 import swift
-from eventlet import sleep, Timeout
+import swiftclient
 
-import base as test_base
 import swsync.objects as swobjects
-from fakes import STORAGE_ORIG, STORAGE_DEST, TENANTS_LIST
+import tests.units.base as test_base
+import tests.units.fakes as fakes
 
 
 def fake_http_connect(status, body='', headers={}, resp_waitfor=None,
@@ -31,14 +31,14 @@ def fake_http_connect(status, body='', headers={}, resp_waitfor=None,
             self.status = status
             self.body = body
             if connect_waitfor:
-                sleep(int(connect_waitfor))
+                eventlet.sleep(int(connect_waitfor))
 
         def getheaders(self):
             return headers
 
         def getresponse(self):
             if resp_waitfor:
-                sleep(int(resp_waitfor))
+                eventlet.sleep(int(resp_waitfor))
             return self
 
         def read(self, amt=None):
@@ -55,9 +55,11 @@ class TestObject(test_base.TestCase):
     def setUp(self):
         super(TestObject, self).setUp()
         self.tenant_name = 'foo1'
-        self.tenant_id = TENANTS_LIST[self.tenant_name]['id']
-        self.orig_storage_url = "%s/AUTH_%s" % (STORAGE_ORIG, self.tenant_id)
-        self.dest_storage_url = "%s/AUTH_%s" % (STORAGE_DEST, self.tenant_id)
+        self.tenant_id = fakes.TENANTS_LIST[self.tenant_name]['id']
+        self.orig_storage_url = "%s/AUTH_%s" % (fakes.STORAGE_ORIG,
+                                                self.tenant_id)
+        self.dest_storage_url = "%s/AUTH_%s" % (fakes.STORAGE_DEST,
+                                                self.tenant_id)
 
     def test_quote(self):
         utf8_chars = u'\uF10F\uD20D\uB30B\u9409\u8508\u5605\u3703\u1801'
@@ -157,7 +159,7 @@ class TestObject(test_base.TestCase):
         new_connect = fake_http_connect(200, connect_waitfor=2)
         self.stubs.Set(swift.common.bufferedhttp,
                        'http_connect_raw', new_connect)
-        self.assertRaises(Timeout,
+        self.assertRaises(eventlet.Timeout,
                           swobjects.get_object,
                           self.orig_storage_url, "token", "cont1", "obj1",
                           conn_timeout=1)
@@ -166,7 +168,7 @@ class TestObject(test_base.TestCase):
         new_connect = fake_http_connect(200, resp_waitfor=2)
         self.stubs.Set(swift.common.bufferedhttp,
                        'http_connect_raw', new_connect)
-        self.assertRaises(Timeout,
+        self.assertRaises(eventlet.Timeout,
                           swobjects.get_object,
                           self.orig_storage_url, "token", "cont1", "obj1",
                           response_timeout=1)

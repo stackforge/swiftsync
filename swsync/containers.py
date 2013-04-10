@@ -68,6 +68,7 @@ class Containers(object):
              orig_token, dest_storage_cnx, dest_storage_url, dest_token,
              container_name):
 
+        # Is this needed to be done before the head?
         try:
             orig_container_stats, orig_objects = swiftclient.get_container(
                 None, orig_token, container_name, http_conn=orig_storage_cnx,
@@ -76,6 +77,7 @@ class Containers(object):
             logging.info("ERROR: getting container: %s, %s" % (
                 container_name, e.http_reason))
             return
+
         try:
             swiftclient.head_container(
                 "", dest_token, container_name, http_conn=dest_storage_cnx

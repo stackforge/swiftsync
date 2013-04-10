@@ -20,8 +20,7 @@
 import unittest
 
 from middlewares import last_modified as middleware
-from swift.common.swob import Request
-from swift.common.swob import Response
+import swift.common.swob as swob
 
 
 class FakeApp(object):
@@ -32,8 +31,8 @@ class FakeApp(object):
 
     def __call__(self, env, start_response):
         status, headers, body = self.status_headers_body
-        return Response(status=status, headers=headers,
-                        body=body)(env, start_response)
+        return swob.Response(status=status, headers=headers,
+                             body=body)(env, start_response)
 
 
 class FakeRequest(object):
@@ -44,7 +43,7 @@ class FakeRequest(object):
 class TestLastModifiedMiddleware(unittest.TestCase):
 
     def _make_request(self, path, **kwargs):
-        req = Request.blank("/v1/AUTH_account/%s" % path, **kwargs)
+        req = swob.Request.blank("/v1/AUTH_account/%s" % path, **kwargs)
         return req
 
     def setUp(self):

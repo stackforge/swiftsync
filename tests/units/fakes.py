@@ -14,10 +14,10 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-import uuid
-import random
 import datetime
+import random
 import urlparse
+import uuid
 
 STORAGE_ORIG = 'http://storage-orig.com'
 STORAGE_DEST = 'http://storage-dest.com'
