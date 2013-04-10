@@ -138,7 +138,7 @@ class TestFiller(base.TestCase):
         self.stubs.Set(filler, 'create_objects', create_objects)
         self.stubs.Set(filler, 'create_containers', create_containers)
 
-        concurrency = int(utils.get_config('filler',
+        concurrency = int(utils.get_config('concurrency',
                                            'swift_client_concurrency'))
         pool = eventlet.GreenPool(concurrency)
 
@@ -203,7 +203,7 @@ class TestFiller(base.TestCase):
 
         self.stubs.Set(filler, 'create_swift_user', create_swift_user)
 
-        concurrency = int(utils.get_config('filler',
+        concurrency = int(utils.get_config('concurrency',
                                            'keystone_client_concurrency'))
         pile = eventlet.GreenPile(concurrency)
         client = FakeKSClient()
@@ -232,7 +232,7 @@ class TestFiller(base.TestCase):
         self.stubs.Set(client.tenants, 'create', create_tenant)
         self.stubs.Set(filler, 'create_swift_user', create_swift_user)
 
-        concurrency = int(utils.get_config('filler',
+        concurrency = int(utils.get_config('concurrency',
                                            'keystone_client_concurrency'))
         pile = eventlet.GreenPile(concurrency)
         filler.create_swift_account(client, pile, 3, 1, self.ret_index)
