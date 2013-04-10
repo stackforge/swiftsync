@@ -20,9 +20,8 @@ import swiftclient
 
 import swsync.containers
 
-import base as test_base
-from fakes import STORAGE_ORIG, STORAGE_DEST, TENANTS_LIST, \
-    CONTAINERS_LIST, CONTAINER_HEADERS, gen_object
+import tests.units.base as test_base
+import tests.units.fakes as fakes
 
 
 class TestContainers(test_base.TestCase):
@@ -31,11 +30,13 @@ class TestContainers(test_base.TestCase):
         self.container_cls = swsync.containers.Containers()
 
         self.tenant_name = 'foo1'
-        self.tenant_id = TENANTS_LIST[self.tenant_name]['id']
-        self.orig_storage_url = '%s/AUTH_%s' % (STORAGE_ORIG, self.tenant_id)
+        self.tenant_id = fakes.TENANTS_LIST[self.tenant_name]['id']
+        self.orig_storage_url = '%s/AUTH_%s' % (fakes.STORAGE_ORIG,
+                                                self.tenant_id)
         self.orig_storage_cnx = (urlparse.urlparse(self.orig_storage_url),
                                  None)
-        self.dest_storage_url = '%s/AUTH_%s' % (STORAGE_DEST, self.tenant_id)
+        self.dest_storage_url = '%s/AUTH_%s' % (fakes.STORAGE_DEST,
+                                                self.tenant_id)
         self.dest_storage_cnx = (urlparse.urlparse(self.dest_storage_url),
                                  None)
 
@@ -49,9 +50,9 @@ class TestContainers(test_base.TestCase):
             raise swiftclient.client.ClientException('Not Here')
 
         def get_container(_, token, name, **kwargs):
-            for clist in CONTAINERS_LIST:
+            for clist in fakes.CONTAINERS_LIST:
                 if clist[0]['name'] == name:
-                    return (CONTAINER_HEADERS, clist[1])
+                    return (fakes.CONTAINER_HEADERS, clist[1])
 
         self.stubs.Set(swiftclient, 'get_container', get_container)
         self.stubs.Set(swiftclient, 'put_container', put_container)
@@ -82,15 +83,15 @@ class TestContainers(test_base.TestCase):
         def get_container(*args, **kwargs):
             # MASTER
             if not get_cnt_called:
-                cont = CONTAINERS_LIST[0][0]
-                objects = list(CONTAINERS_LIST[0][1])
+                cont = fakes.CONTAINERS_LIST[0][0]
+                objects = list(fakes.CONTAINERS_LIST[0][1])
                 get_cnt_called.append(True)
             # TARGET
             else:
-                cont = CONTAINERS_LIST[0][0]
-                objects = list(CONTAINERS_LIST[0][1])
+                cont = fakes.CONTAINERS_LIST[0][0]
+                objects = list(fakes.CONTAINERS_LIST[0][1])
                 # Add an object to target.
-                objects.append(gen_object('NEWOBJ'))
+                objects.append(fakes.gen_object('NEWOBJ'))
 
             return (cont, objects)
 
@@ -123,14 +124,14 @@ class TestContainers(test_base.TestCase):
         def get_container(*args, **kwargs):
             # MASTER
             if not get_cnt_called:
-                cont = CONTAINERS_LIST[0][0]
-                objects = list(CONTAINERS_LIST[0][1])
-                objects.append(gen_object('NEWOBJ'))
+                cont = fakes.CONTAINERS_LIST[0][0]
+                objects = list(fakes.CONTAINERS_LIST[0][1])
+                objects.append(fakes.gen_object('NEWOBJ'))
                 get_cnt_called.append(True)
             # TARGET
             else:
-                cont = CONTAINERS_LIST[0][0]
-                objects = list(CONTAINERS_LIST[0][1])
+                cont = fakes.CONTAINERS_LIST[0][0]
+                objects = list(fakes.CONTAINERS_LIST[0][1])
 
             return (cont, objects)
 
