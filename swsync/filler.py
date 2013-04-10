@@ -39,6 +39,8 @@ import StringIO
 from swiftclient import client as sclient
 from swiftclient.client import ClientException
 
+from keystoneclient.exceptions import ClientException as KSClientException
+
 import eventlet
 
 sys.path.append("../")
@@ -89,8 +91,13 @@ def create_swift_user(client, account_name, account_id, user_amount):
         client.roles.add_user_role(uid.id, roleid, account_id)
         return (user, uid.id, roleid)
     for i in range(user_amount):
-        ret = _create_user(account_name, account_id)
-        users.append(ret)
+        try:
+            ret = _create_user(account_name, account_id)
+            logging.info('Users created %s in account %s' %
+                         (str(ret), account_id))
+            users.append(ret)
+        except KSClientException:
+            logging.warn('Unable to create an user in account %s' % account_id)
     return users
 
 
@@ -101,10 +108,13 @@ def create_swift_account(client, pile,
     def _create_account(user_amount):
         account = get_rand_str(mode='account_')
         # Create a tenant. In swift this is an account
-        account_id = client.tenants.create(account).id
-        logging.info('Account created %s' % account)
+        try:
+            account_id = client.tenants.create(account).id
+            logging.info('Account created %s' % account)
+        except KSClientException:
+            logging.warn('Unable to create account %s' % account)
+            return None, None, None
         r = create_swift_user(client, account, account_id, user_amount)
-        logging.info('Users created %s in account %s' % (str(r), account))
         return account, account_id, r
     created = {}
     # Spawn a greenlet for each account
@@ -114,8 +124,9 @@ def create_swift_account(client, pile,
         logging.info("[Keystone Start OPs %s/%s]" % (i, account_amount))
         pile.spawn(_create_account, user_amount)
     for account, account_id, ret in pile:
-        index[(account, account_id)] = ret
-        created[(account, account_id)] = ret
+        if account is not None:
+            index[(account, account_id)] = ret
+            created[(account, account_id)] = ret
     return created
 
 
