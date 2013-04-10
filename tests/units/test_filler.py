@@ -18,7 +18,10 @@
 import eventlet
 import swiftclient
 
+from keystoneclient.exceptions import ClientException as KSClientException
+
 from fakes import FakeKSClient
+from fakes import FakeKSTenant
 from fakes import FakeKSUser
 from fakes import FakeSWConnection
 
@@ -166,6 +169,30 @@ class TestFiller(base.TestCase):
         self.assertEqual(self.create_cnt, 1)
         self.assertEqual(self.role_cnt, 1)
 
+    def test_create_swift_user_fail(self):
+        self.pa = 0
+
+        def create(*args, **kargs):
+            if self.pa == 0:
+                self.pa += 1
+                raise KSClientException('Fake msg')
+            else:
+                self.pa += 1
+                return FakeKSUser()
+
+        def add_user_role(*args, **kargs):
+            pass
+
+        co = utils.get_config('auth',
+                              'keystone_origin_admin_credentials').split(':')
+        tenant_name, username, password = co
+        client = FakeKSClient()
+        client.roles.add_user_role = add_user_role
+        client.users.create = create
+        users = filler.create_swift_user(client, 'account1', 'account1_id', 3)
+
+        self.assertEqual(len(users), 2)
+
     def test_create_swift_account(self):
         self.ret_index = {}
         self.user_cnt = 0
@@ -182,6 +209,32 @@ class TestFiller(base.TestCase):
 
         self.assertEqual(self.user_cnt, 1)
         self.assertEqual(len(self.ret_index.keys()), 1)
+
+    def test_create_swift_account_fail(self):
+        self.ret_index = {}
+        self.pa = 0
+
+        def create_tenant(*args):
+            if self.pa == 0:
+                self.pa += 1
+                raise KSClientException('Fake msg')
+            else:
+                self.pa += 1
+                return FakeKSTenant('foo1')
+
+        def create_swift_user(*args):
+            pass
+
+        client = FakeKSClient()
+
+        self.stubs.Set(client.tenants, 'create', create_tenant)
+        self.stubs.Set(filler, 'create_swift_user', create_swift_user)
+
+        concurrency = int(utils.get_config('filler', 'concurrency'))
+        pile = eventlet.GreenPile(concurrency)
+        filler.create_swift_account(client, pile, 3, 1, self.ret_index)
+
+        self.assertEqual(len(self.ret_index.keys()), 2)
 
     def test_delete_account(self):
         self.delete_t_cnt = 0
