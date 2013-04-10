@@ -270,3 +270,193 @@ class TestContainers(test_base.TestCase):
             "cnx1", "token1", orig_containers, dest_containers)
 
         self.assertEqual(len(called), 1)
+
+    def test_sync_containers_metada_added_on_dest(self):
+        get_called = []
+        post_called = []
+
+        def get_container(*args, **kwargs):
+            if len(get_called) == 0:
+                get_called.append("TESTED")
+                return ({
+                    'x-container-meta-om': 'enkl',
+                    'x-trans-id': 'ffs',
+                    'x-container-bytes-used': '100',
+                    'x-container-object-count': '2'},
+                    [{'last_modified': '2010', 'name': 'foo'}])
+            else:
+                get_called.append("TESTED2")
+                return ({
+                    'x-container-meta-om': 'enkl',
+                    'x-container-meta-psg': 'magique',
+                    'x-trans-id': 'ffs',
+                    'x-container-bytes-used': '200',
+                    'x-container-object-count': '2'},
+                    [{'last_modified': '2010', 'name': 'foo'}])
+            self.stubs.Set(swiftclient, 'get_container', get_container)
+
+        self.stubs.Set(swiftclient, 'get_container', get_container)
+
+        def post_container(url, token, container, headers, **kwargs):
+            post_called.append(headers)
+        self.stubs.Set(swiftclient, 'post_container', post_container)
+
+        def head_container(*args, **kwargs):
+            pass
+        self.stubs.Set(swiftclient, 'head_container', head_container)
+
+        self.container_cls.sync(
+            self.orig_storage_cnx,
+            self.orig_storage_url,
+            'token',
+            self.dest_storage_cnx,
+            self.dest_storage_url,
+            'token',
+            'cont1')
+
+        self.assertEqual(len(get_called), 2)
+        self.assertEqual(len(post_called), 1)
+        self.assertEquals(post_called[0]['x-container-meta-psg'], '')
+        self.assertEquals(post_called[0]['x-container-meta-om'], 'enkl')
+
+    def test_sync_containers_metada_added_on_orig(self):
+        get_called = []
+        post_called = []
+
+        def get_container(*args, **kwargs):
+            if len(get_called) == 0:
+                get_called.append("TESTED")
+                return ({
+                    'x-container-meta-om': 'enkl',
+                    'x-trans-id': 'ffs',
+                    'x-container-bytes-used': '100',
+                    'x-container-object-count': '2'},
+                    [{'last_modified': '2010', 'name': 'foo'}])
+            else:
+                get_called.append("TESTED2")
+                return ({
+                    'x-trans-id': 'ffs',
+                    'x-container-bytes-used': '200',
+                    'x-container-object-count': '2'},
+                    [{'last_modified': '2010', 'name': 'foo'}])
+            self.stubs.Set(swiftclient, 'get_container', get_container)
+
+        self.stubs.Set(swiftclient, 'get_container', get_container)
+
+        def post_container(url, token, container, headers, **kwargs):
+            post_called.append(headers)
+        self.stubs.Set(swiftclient, 'post_container', post_container)
+
+        def head_container(*args, **kwargs):
+            pass
+        self.stubs.Set(swiftclient, 'head_container', head_container)
+
+        self.container_cls.sync(
+            self.orig_storage_cnx,
+            self.orig_storage_url,
+            'token',
+            self.dest_storage_cnx,
+            self.dest_storage_url,
+            'token',
+            'cont1')
+
+        self.assertEqual(len(get_called), 2)
+        self.assertEqual(len(post_called), 1)
+        self.assertEquals(post_called[0]['x-container-meta-om'], 'enkl')
+
+    def test_sync_containers_metada_changed(self):
+        get_called = []
+        post_called = []
+
+        def get_container(*args, **kwargs):
+            if len(get_called) == 0:
+                get_called.append("TESTED")
+                return ({
+                    'x-container-meta-psg': 'magic',
+                    'x-trans-id': 'ffs',
+                    'x-container-bytes-used': '100',
+                    'x-container-object-count': '2'},
+                    [{'last_modified': '2010', 'name': 'foo'}])
+            else:
+                get_called.append("TESTED2")
+                return ({
+                    'x-container-meta-psg': 'marseille',
+                    'x-trans-id': 'ffs',
+                    'x-container-bytes-used': '200',
+                    'x-container-object-count': '2'},
+                    [{'last_modified': '2010', 'name': 'foo'}])
+            self.stubs.Set(swiftclient, 'get_container', get_container)
+
+        self.stubs.Set(swiftclient, 'get_container', get_container)
+
+        def post_container(url, token, container, headers, **kwargs):
+            post_called.append(headers)
+        self.stubs.Set(swiftclient, 'post_container', post_container)
+
+        def head_container(*args, **kwargs):
+            pass
+        self.stubs.Set(swiftclient, 'head_container', head_container)
+
+        self.container_cls.sync(
+            self.orig_storage_cnx,
+            self.orig_storage_url,
+            'token',
+            self.dest_storage_cnx,
+            self.dest_storage_url,
+            'token',
+            'cont1')
+
+        self.assertEqual(len(get_called), 2)
+        self.assertEqual(len(post_called), 1)
+        self.assertEquals(post_called[0]['x-container-meta-psg'], 'magic')
+
+    def test_sync_containers_raise_client(self):
+        get_called = []
+        post_called = []
+        called_info = []
+
+        def fake_info(msg):
+            called_info.append(msg)
+        self.stubs.Set(logging, 'info', fake_info)
+
+        def get_container(*args, **kwargs):
+            if len(get_called) == 0:
+                get_called.append("TESTED")
+                return ({
+                    'x-container-meta-psg': 'magic',
+                    'x-trans-id': 'ffs',
+                    'x-container-bytes-used': '100',
+                    'x-container-object-count': '2'},
+                    [{'last_modified': '2010', 'name': 'foo'}])
+            else:
+                get_called.append("TESTED2")
+                return ({
+                    'x-container-meta-psg': 'marseille',
+                    'x-trans-id': 'ffs',
+                    'x-container-bytes-used': '200',
+                    'x-container-object-count': '2'},
+                    [{'last_modified': '2010', 'name': 'foo'}])
+            self.stubs.Set(swiftclient, 'get_container', get_container)
+
+        self.stubs.Set(swiftclient, 'get_container', get_container)
+
+        def post_container(url, token, container, headers, **kwargs):
+            post_called.append(headers)
+            raise swiftclient.client.ClientException("TEST")
+        self.stubs.Set(swiftclient, 'post_container', post_container)
+
+        def head_container(*args, **kwargs):
+            pass
+        self.stubs.Set(swiftclient, 'head_container', head_container)
+
+        self.container_cls.sync(
+            self.orig_storage_cnx,
+            self.orig_storage_url,
+            'token',
+            self.dest_storage_cnx,
+            self.dest_storage_url,
+            'token',
+            'cont1')
+
+        self.assertIn('ERROR: updating container metadata: cont1, ',
+                      called_info)

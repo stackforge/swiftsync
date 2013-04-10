@@ -64,13 +64,21 @@ class Containers(object):
                        '', dest_token, container, http_conn=dest_storage_cnx)
         pool.waitall()
 
+    def container_headers_clean(self, container_headers, to_null=False):
+        ret = {}
+        for key, value in container_headers.iteritems():
+            if key.startswith('x-container-meta'):
+                if to_null:
+                    value = ''
+                ret[key] = value
+        return ret
+
     def sync(self, orig_storage_cnx, orig_storage_url,
              orig_token, dest_storage_cnx, dest_storage_url, dest_token,
              container_name):
 
-        # Is this needed to be done before the head?
         try:
-            orig_container_stats, orig_objects = swiftclient.get_container(
+            orig_container_headers, orig_objects = swiftclient.get_container(
                 None, orig_token, container_name, http_conn=orig_storage_cnx,
             )
         except(swiftclient.client.ClientException), e:
@@ -79,11 +87,12 @@ class Containers(object):
             return
 
         try:
+            # Check that the container exists on dest
             swiftclient.head_container(
                 "", dest_token, container_name, http_conn=dest_storage_cnx
             )
         except(swiftclient.client.ClientException), e:
-            container_headers = orig_container_stats.copy()
+            container_headers = orig_container_headers.copy()
             for h in ('x-container-object-count', 'x-trans-id',
                       'x-container-bytes-used'):
                 del container_headers[h]
@@ -99,13 +108,42 @@ class Containers(object):
                 return
 
         try:
-            dest_container_stats, dest_objects = swiftclient.get_container(
+            dest_container_headers, dest_objects = swiftclient.get_container(
                 None, dest_token, container_name, http_conn=dest_storage_cnx,
             )
         except(swiftclient.client.ClientException), e:
             logging.info("ERROR: creating container: %s, %s" % (
                 container_name, e.http_reason))
             return
+
+        do_headers = False
+        if len(dest_container_headers) != len(orig_container_headers):
+            do_headers = True
+        else:
+            for k, v in orig_container_headers.iteritems():
+                if k.startswith('x-container-meta') and \
+                   dest_container_headers[k] != v:
+                    do_headers = True
+
+        if do_headers:
+            orig_metadata_headers = self.container_headers_clean(
+                orig_container_headers)
+            dest_metadata_headers = self.container_headers_clean(
+                dest_container_headers, to_null=True)
+            new_headers = dict(dest_metadata_headers.items() +
+                               orig_metadata_headers.items())
+            try:
+                swiftclient.post_container(
+                    "", dest_token, container_name, new_headers,
+                    http_conn=dest_storage_cnx,
+                )
+                logging.info("HEADER: sync headers: %s" % (container_name))
+            except(swiftclient.client.ClientException), e:
+                logging.info("ERROR: updating container metadata: %s, %s" % (
+                    container_name, e.http_reason))
+                # We don't pass on because since the server was busy
+                # let's pass it on for the next pass
+                return
 
         set1 = set((x['last_modified'], x['name']) for x in orig_objects)
         set2 = set((x['last_modified'], x['name']) for x in dest_objects)
