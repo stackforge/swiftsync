@@ -24,25 +24,183 @@ import tests.units.base
 import tests.units.fakes as fakes
 
 
-class TestAccount(tests.units.base.TestCase):
+class TestAccountBase(tests.units.base.TestCase):
     def setUp(self):
-        super(TestAccount, self).setUp()
+        super(TestAccountBase, self).setUp()
         self.accounts_cls = swsync.accounts.Accounts()
         self._stubs()
-
-    def get_account(self, *args, **kwargs):
-        return ({'x-account-container-count': len(fakes.CONTAINERS_LIST)},
-                [x[0] for x in fakes.CONTAINERS_LIST])
 
     def _stubs(self):
         self.stubs.Set(keystoneclient.v2_0, 'client', fakes.FakeKS)
         self.stubs.Set(swiftclient.client, 'Connection',
                        fakes.FakeSWConnection)
         self.stubs.Set(swsync.accounts, 'get_config', fakes.fake_get_config)
-        self.stubs.Set(swiftclient, 'get_account', self.get_account)
         self.stubs.Set(swiftclient, 'http_connection',
                        fakes.FakeSWClient.http_connection)
 
+
+class TestAccountSyncMetadata(TestAccountBase):
+    def _base_sync_metadata(self, orig_dict={},
+                            dest_dict={},
+                            get_account_called=[],
+                            post_account_called=[],
+                            info_called=[],
+                            sync_container_called=[],
+                            raise_post_account=False):
+
+        def fake_info(msg, *args):
+            info_called.append(msg)
+        self.stubs.Set(logging, 'info', fake_info)
+
+        def get_account(self, *args, **kwargs):
+            if len(get_account_called) == 0:
+                get_account_called.append(args)
+                return orig_dict
+            else:
+                get_account_called.append(args)
+                return dest_dict
+        self.stubs.Set(swiftclient, 'get_account', get_account)
+
+        def post_account(url, token, headers, **kwargs):
+            post_account_called.append(headers)
+
+            if raise_post_account:
+                raise swiftclient.client.ClientException("Error in testing")
+        self.stubs.Set(swiftclient, 'post_account', post_account)
+
+        class Containers(object):
+            def sync(*args, **kwargs):
+                sync_container_called.append(args)
+        self.accounts_cls.container_cls = Containers()
+        self.accounts_cls.sync_account("http://orig", "otoken",
+                                       "http://dest", "dtoken")
+
+    def test_sync_metadata_delete_dest(self):
+        get_account_called = []
+        sync_container_called = []
+        post_account_called = []
+        info_called = []
+
+        orig_dict = ({'x-account-meta-life': 'beautiful',
+                      'x-account-container-count': 1},
+                     [{'name': 'cont1'}])
+
+        dest_dict = ({'x-account-meta-vita': 'bella',
+                      'x-account-container-count': 1},
+                     [{'name': 'cont1'}])
+        self._base_sync_metadata(orig_dict,
+                                 dest_dict,
+                                 info_called=info_called,
+                                 sync_container_called=sync_container_called,
+                                 post_account_called=post_account_called,
+                                 get_account_called=get_account_called)
+
+        self.assertEquals(len(sync_container_called), 1)
+        self.assertEquals(len(get_account_called), 2)
+        self.assertTrue(info_called)
+
+        self.assertIn('x-account-meta-life',
+                      post_account_called[0])
+        self.assertEqual(post_account_called[0]['x-account-meta-life'],
+                         'beautiful')
+        self.assertIn('x-account-meta-vita',
+                      post_account_called[0])
+        self.assertEqual(post_account_called[0]['x-account-meta-vita'],
+                         '')
+
+    def test_sync_metadata_update_dest(self):
+        get_account_called = []
+        sync_container_called = []
+        post_account_called = []
+        info_called = []
+
+        orig_dict = ({'x-account-meta-life': 'beautiful',
+                      'x-account-container-count': 1},
+                     [{'name': 'cont1'}])
+
+        dest_dict = ({'x-account-meta-life': 'bella',
+                      'x-account-container-count': 1},
+                     [{'name': 'cont1'}])
+        self._base_sync_metadata(orig_dict,
+                                 dest_dict,
+                                 info_called=info_called,
+                                 sync_container_called=sync_container_called,
+                                 post_account_called=post_account_called,
+                                 get_account_called=get_account_called)
+
+        self.assertEquals(len(sync_container_called), 1)
+        self.assertEquals(len(get_account_called), 2)
+        self.assertTrue(info_called)
+
+        self.assertIn('x-account-meta-life',
+                      post_account_called[0])
+        self.assertEqual(post_account_called[0]['x-account-meta-life'],
+                         'beautiful')
+
+        self.assertIn('x-account-meta-life',
+                      post_account_called[0])
+        self.assertEqual(post_account_called[0]['x-account-meta-life'],
+                         'beautiful')
+
+    def test_sync_metadata_add_to_dest(self):
+        info_called = []
+        get_account_called = []
+        sync_container_called = []
+        post_account_called = []
+
+        orig_dict = ({'x-account-meta-life': 'beautiful',
+                      'x-account-container-count': 1},
+                     [{'name': 'cont1'}])
+
+        dest_dict = ({'x-account-container-count': 1},
+                     [{'name': 'cont1'}])
+        self._base_sync_metadata(orig_dict,
+                                 dest_dict,
+                                 info_called=info_called,
+                                 sync_container_called=sync_container_called,
+                                 post_account_called=post_account_called,
+                                 get_account_called=get_account_called)
+
+        self.assertEquals(len(sync_container_called), 1)
+        self.assertEquals(len(get_account_called), 2)
+        self.assertTrue(info_called)
+
+        self.assertIn('x-account-meta-life',
+                      post_account_called[0])
+        self.assertEqual(post_account_called[0]['x-account-meta-life'],
+                         'beautiful')
+
+        self.assertIn('x-account-meta-life',
+                      post_account_called[0])
+        self.assertEqual(post_account_called[0]['x-account-meta-life'],
+                         'beautiful')
+
+    def test_sync_metadata_raise(self):
+        info_called = []
+        get_account_called = []
+        sync_container_called = []
+        post_account_called = []
+
+        orig_dict = ({'x-account-meta-life': 'beautiful',
+                      'x-account-container-count': 1},
+                     [{'name': 'cont1'}])
+
+        dest_dict = ({'x-account-container-count': 1},
+                     [{'name': 'cont1'}])
+        self._base_sync_metadata(orig_dict,
+                                 dest_dict,
+                                 info_called=info_called,
+                                 sync_container_called=sync_container_called,
+                                 post_account_called=post_account_called,
+                                 get_account_called=get_account_called,
+                                 raise_post_account=True)
+        self.assertTrue(info_called)
+        self.assertIn('ERROR: updating container metadata: orig, ',
+                      info_called)
+        self.assertFalse(sync_container_called)
+
+
+class TestAccountSync(TestAccountBase):
     def test_get_swift_auth(self):
         tenant_name = 'foo1'
         ret = self.accounts_cls.get_swift_auth(
@@ -81,6 +239,11 @@ class TestAccount(tests.units.base.TestCase):
 
     def test_sync_account(self):
         ret = []
+
+        def get_account(*args, **kwargs):
+            return ({'x-account-container-count': len(fakes.CONTAINERS_LIST)},
+                    [x[0] for x in fakes.CONTAINERS_LIST])
+        self.stubs.Set(swiftclient, 'get_account', get_account)
 
         class Containers(object):
             def sync(*args, **kwargs):

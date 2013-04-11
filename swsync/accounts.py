@@ -16,6 +16,7 @@
 # under the License.
 import datetime
 import logging
+import os
 import time
 
 import dateutil.relativedelta
@@ -51,35 +52,80 @@ class Accounts(object):
                                                  password=password,
                                                  tenant_name=tenant_name)
 
+    def account_headers_clean(self, account_headers, to_null=False):
+        ret = {}
+        for key, value in account_headers.iteritems():
+            if key.startswith('x-account-meta'):
+                if to_null:
+                    value = ''
+                ret[key] = value
+        return ret
+
     def sync_account(self, orig_storage_url, orig_token,
                      dest_storage_url, dest_token):
         """Sync a single account with url/tok to dest_url/dest_tok."""
         orig_storage_cnx = swiftclient.http_connection(orig_storage_url)
         dest_storage_cnx = swiftclient.http_connection(dest_storage_url)
+        account_id = os.path.basename(orig_storage_url.replace("AUTH_", ''))
 
         try:
-            orig_stats, orig_containers = (
+            orig_account_headers, orig_containers = (
                 swiftclient.get_account(None, orig_token,
                                         http_conn=orig_storage_cnx,
                                         full_listing=True))
 
-            dest_stats, dest_containers = (
+            dest_account_headers, dest_containers = (
                 swiftclient.get_account(None, dest_token,
                                         http_conn=dest_storage_cnx,
                                         full_listing=True))
         except(swiftclient.client.ClientException), e:
-                logging.info("error getting containeaccount: %s, %s" % (
-                    orig_storage_url, e.http_reason))
+                logging.info("error getting account: %s, %s" % (
+                    account_id, e.http_reason))
                 return
-        if int(dest_stats['x-account-container-count']) > \
-                int(orig_stats['x-account-container-count']):
+
+        if int(dest_account_headers['x-account-container-count']) > \
+           int(orig_account_headers['x-account-container-count']):
             self.container_cls.delete_container(dest_storage_cnx,
                                                 dest_token,
                                                 orig_containers,
                                                 dest_containers)
 
+        do_headers = False
+        if len(dest_account_headers) != len(orig_account_headers):
+            do_headers = True
+        else:
+            for k, v in orig_account_headers.iteritems():
+                if not k.startswith('x-account-meta'):
+                    continue
+                if k not in dest_account_headers:
+                    do_headers = True
+                elif dest_account_headers[k] != v:
+                    do_headers = True
+
+        if do_headers:
+            orig_metadata_headers = self.account_headers_clean(
+                orig_account_headers)
+            dest_metadata_headers = self.account_headers_clean(
+                dest_account_headers, to_null=True)
+
+            new_headers = dict(dest_metadata_headers.items() +
+                               orig_metadata_headers.items())
+            try:
+                swiftclient.post_account(
+                    "", dest_token, new_headers,
+                    http_conn=dest_storage_cnx,
+                )
+                logging.info("HEADER: sync headers: %s" % (account_id))
+            except(swiftclient.client.ClientException), e:
+                logging.info("ERROR: updating container metadata: %s, %s" % (
+                    account_id, e.http_reason))
+                # We don't pass on because since the server was busy
+                # let's pass it on for the next pass
+                return
+
         for container in orig_containers:
-            logging.info("Syncronizing %s: %s", container['name'], container)
+            logging.info("Syncronizing container %s: %s",
+                         container['name'], container)
             dt1 = datetime.datetime.fromtimestamp(time.time())
             self.container_cls.sync(orig_storage_cnx,
                                     orig_storage_url,
