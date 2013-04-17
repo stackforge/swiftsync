@@ -81,11 +81,13 @@ class TestSyncer(unittest.TestCase):
         # Instanciate syncer
         self.swsync = accounts.Accounts()
 
-    def extract_created_a_u(self, created):
-        account = created.keys()[0][0]
-        account_id = created.keys()[0][1]
-        username = created.values()[0][0][0]
-        return account, account_id, username
+    def extract_created_a_u_iter(self, created):
+        for ad, usd in created.items():
+            account = ad[0]
+            account_id = ad[1]
+            # Retreive the first user as we only need one
+            username = usd[0][0]
+            yield account, account_id, username
 
     def create_st_account_url(self, account_id):
         o_account_url = self.o_admin_auth_url.split('AUTH_')[0] \
@@ -94,7 +96,7 @@ class TestSyncer(unittest.TestCase):
                         + 'AUTH_' + account_id
         return o_account_url, d_account_url
 
-    def verify_account_diff(self, alo, ald):
+    def verify_aco_diff(self, alo, ald):
         for k, v in alo[0].items():
             if k not in ('x-timestamp', 'x-trans-id', 'date'):
                 self.assertEqual(ald[0][k], v, msg='%s differs' %k)
@@ -114,7 +116,40 @@ class TestSyncer(unittest.TestCase):
                                       obj, http_conn=cnx)
             sclient.delete_container('', token, container, http_conn=cnx)
 
-    def test_sync_one_empty_account(self):
+    def get_url(self, account_id, s_type):
+        # Create account storage url
+        o_account_url, d_account_url = \
+                self.create_st_account_url(account_id)
+        if s_type == 'orig':
+            url = o_account_url
+        elif s_type == 'dest':
+            url = d_account_url
+        else:
+            raise Exception('Unknown type')
+        return url
+    
+    def get_account_detail(self, account_id, token, s_type):
+        url = self.get_url(account_id, s_type)
+        cnx = sclient.http_connection(url)
+        return sclient.get_account(None, token,
+                                   http_conn=cnx,
+                                   full_listing=True)
+    
+    def list_containers(self, account_id, token, s_type):
+        cd = self.get_account_detail(account_id, token, s_type)
+        return cd[1]
+
+    def get_container_detail(self, account_id, token, s_type, container):
+        url = self.get_url(account_id, s_type)
+        cnx = sclient.http_connection(url)
+        return sclient.get_container(None, token, container,
+                              http_conn=cnx, full_listing=True)
+    
+    def list_objects(self, account_id, token, s_type, container):
+        cd = self.get_container_detail(account_id, token, s_type, container)
+        return cd[1]
+
+    def test_01_sync_one_empty_account(self):
         """ One empty account with meta data
         """
         index = {}
@@ -122,32 +157,100 @@ class TestSyncer(unittest.TestCase):
         self.created = filler.create_swift_account(self.o_ks_client,
                                                    self.pile,
                                                    1, 1, index)
-        account, account_id, username = self.extract_created_a_u(self.created)
-        # Post meta data on account
-        tenant_cnx = sclient.Connection(self.o_st,
-                                        "%s:%s" % (account, username),
-                                        self.default_user_password,
-                                        auth_version=2)
-        filler.create_account_meta(tenant_cnx)
+        
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            # Post meta data on account
+            tenant_cnx = sclient.Connection(self.o_st,
+                                            "%s:%s" % (account, username),
+                                            self.default_user_password,
+                                            auth_version=2)
+            filler.create_account_meta(tenant_cnx)
+        
         # Start sync process
         self.swsync.process()
-        # Create account storage url
-        o_account_url, d_account_url = self.create_st_account_url(account_id)
-        # Retreive account details
-        o_cnx = sclient.http_connection(o_account_url)
-        d_cnx = sclient.http_connection(d_account_url)
-        alo = sclient.get_account(None, self.o_admin_token,
-                            http_conn=o_cnx,
-                            full_listing=True)
-        ald = sclient.get_account(None, self.d_admin_token,
-                            http_conn=d_cnx,
-                            full_listing=True)
-        self.verify_account_diff(alo, ald)
+        
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            alo = self.get_account_detail(account_id,
+                                          self.o_admin_token, 'orig')
+            ald = self.get_account_detail(account_id,
+                                          self.d_admin_token, 'dest')
+            self.verify_account_diff(alo, ald)
     
-    def test_sync_many_empty_account(self):
+    def test_02_sync_many_empty_account(self):
         """ Many empty account with meta data
         """
-        pass
+        index = {}
+        # Create account
+        self.created = filler.create_swift_account(self.o_ks_client,
+                                                   self.pile,
+                                                   3, 1, index)
+        
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            # Post meta data on account
+            tenant_cnx = sclient.Connection(self.o_st,
+                                            "%s:%s" % (account, username),
+                                            self.default_user_password,
+                                            auth_version=2)
+            filler.create_account_meta(tenant_cnx)
+        
+        # Start sync process
+        self.swsync.process()
+        
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            alo = self.get_account_detail(account_id,
+                                          self.o_admin_token, 'orig')
+            ald = self.get_account_detail(account_id,
+                                          self.d_admin_token, 'dest')
+            self.verify_account_diff(alo, ald)
+
+
+    def test_03_sync_one_account_with_container_meta(self):
+        """ One account with containers and container meta data
+        """
+        index = {}
+        index_container = {}
+        # Create account
+        self.created = filler.create_swift_account(self.o_ks_client,
+                                                   self.pile,
+                                                   1, 1, index)
+
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            tenant_cnx = sclient.Connection(self.o_st,
+                                            "%s:%s" % (account, username),
+                                            self.default_user_password,
+                                            auth_version=2)
+            acc = (account, account_id)
+            filler.create_containers(tenant_cnx, acc, 1, index_container)
+        
+        # Start sync process
+        self.swsync.process()
+        
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            # Verify container listing
+            clo = self.list_containers(account_id,
+                                       self.o_admin_token, 'orig')
+            cld = self.list_containers(account_id,
+                                       self.d_admin_token, 'dest')
+            self.assertEqual(len(clo), len(cld))
+            for do in clo:
+                match = [dd for dd in cld if dd['name'] == do['name']]
+                self.assertEqual(len(match), 1)
+                self.assertDictEqual(do, match[0])
+            # Verify container details
+            clo_c_names = [d['name'] for d in clo]
+            cld_c_names = [d['name'] for d in cld]
+            for c_name in clo_c_names:
+                cdo = self.get_container_detail(account_id, self.o_admin_token,
+                                                'orig', c_name)
+                cdd = self.get_container_detail(account_id, self.d_admin_token,
+                                                'dest', c_name)
+            self.verify_aco_diff(cdo, cdd)
 
                                      
     def tearDown(self):
