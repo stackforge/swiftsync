@@ -67,17 +67,19 @@ class TestSyncer(unittest.TestCase):
             password=self.o_admin_password,
             tenant_name=self.o_admin_tenant)
         # Retreive admin (ResellerAdmin) token
-        (self.o_admin_auth_url, self.o_admin_token) = sclient.Connection(
-                            self.o_st,
-                            "%s:%s" % (self.o_admin_tenant, self.o_admin_user),
-                            self.o_admin_password,
-                            auth_version=2).get_auth()
+        (self.o_admin_auth_url, self.o_admin_token) = \
+            sclient.Connection(self.o_st,
+                               "%s:%s" % (self.o_admin_tenant,
+                                          self.o_admin_user),
+                               self.o_admin_password,
+                               auth_version=2).get_auth()
         # Retreive admin (ResellerAdmin) token
-        (self.d_admin_auth_url, self.d_admin_token) = sclient.Connection(
-                            self.d_st,
-                            "%s:%s" % (self.o_admin_tenant, self.o_admin_user),
-                            self.o_admin_password,
-                            auth_version=2).get_auth()
+        (self.d_admin_auth_url, self.d_admin_token) = \
+            sclient.Connection(self.d_st,
+                               "%s:%s" % (self.o_admin_tenant,
+                                          self.o_admin_user),
+                               self.o_admin_password,
+                               auth_version=2).get_auth()
         # Instanciate syncer
         self.swsync = accounts.Accounts()
 
@@ -90,23 +92,23 @@ class TestSyncer(unittest.TestCase):
             yield account, account_id, username
 
     def create_st_account_url(self, account_id):
-        o_account_url = self.o_admin_auth_url.split('AUTH_')[0] \
-                        + 'AUTH_' + account_id
-        d_account_url = self.d_admin_auth_url.split('AUTH_')[0] \
-                        + 'AUTH_' + account_id
+        o_account_url = \
+            self.o_admin_auth_url.split('AUTH_')[0] + 'AUTH_' + account_id
+        d_account_url = \
+            self.d_admin_auth_url.split('AUTH_')[0] + 'AUTH_' + account_id
         return o_account_url, d_account_url
 
     def verify_aco_diff(self, alo, ald):
         # Verify account, container, object diff in HEAD struct
         for k, v in alo[0].items():
             if k not in ('x-timestamp', 'x-trans-id', 'date'):
-                self.assertEqual(ald[0][k], v, msg='%s differs' %k)
-    
+                self.assertEqual(ald[0][k], v, msg='%s differs' % k)
+
     def delete_account_cont(self, account_url, token):
         cnx = sclient.http_connection(account_url)
         al = sclient.get_account(None, token,
-                            http_conn=cnx,
-                            full_listing=True)
+                                 http_conn=cnx,
+                                 full_listing=True)
         for container in [c['name'] for c in al[1]]:
             ci = sclient.get_container(None, token,
                                        container, http_conn=cnx,
@@ -119,8 +121,7 @@ class TestSyncer(unittest.TestCase):
 
     def get_url(self, account_id, s_type):
         # Create account storage url
-        o_account_url, d_account_url = \
-                self.create_st_account_url(account_id)
+        o_account_url, d_account_url = self.create_st_account_url(account_id)
         if s_type == 'orig':
             url = o_account_url
         elif s_type == 'dest':
@@ -128,14 +129,14 @@ class TestSyncer(unittest.TestCase):
         else:
             raise Exception('Unknown type')
         return url
-    
+
     def get_account_detail(self, account_id, token, s_type):
         url = self.get_url(account_id, s_type)
         cnx = sclient.http_connection(url)
         return sclient.get_account(None, token,
                                    http_conn=cnx,
                                    full_listing=True)
-    
+
     def list_containers(self, account_id, token, s_type):
         cd = self.get_account_detail(account_id, token, s_type)
         return cd[1]
@@ -144,8 +145,8 @@ class TestSyncer(unittest.TestCase):
         url = self.get_url(account_id, s_type)
         cnx = sclient.http_connection(url)
         return sclient.get_container(None, token, container,
-                              http_conn=cnx, full_listing=True)
-    
+                                     http_conn=cnx, full_listing=True)
+
     def list_objects(self, account_id, token, s_type, container):
         cd = self.get_container_detail(account_id, token, s_type, container)
         return cd[1]
@@ -164,8 +165,8 @@ class TestSyncer(unittest.TestCase):
         return sclient.get_object("", token, container, obj, http_conn=cnx)
 
     def get_account_meta(self, account_id, token, s_type):
-        d = self.get_account_detail(account_id, token, s_type) 
-        return {k:v for k,v in d[0].iteritems()\
+        d = self.get_account_detail(account_id, token, s_type)
+        return {k: v for k, v in d[0].iteritems()
                 if k.startswith('x-account-meta')}
 
     def post_account(self, account_id, token, s_type, headers):
@@ -174,14 +175,14 @@ class TestSyncer(unittest.TestCase):
         sclient.post_account("", token, headers, http_conn=cnx)
 
     def test_01_sync_one_empty_account(self):
-        """ one empty account with meta data
+        """one empty account with meta data
         """
         index = {}
         # create account
         self.created = filler.create_swift_account(self.o_ks_client,
                                                    self.pile,
                                                    1, 1, index)
-        
+
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
             # post meta data on account
@@ -190,10 +191,10 @@ class TestSyncer(unittest.TestCase):
                                             self.default_user_password,
                                             auth_version=2)
             filler.create_account_meta(tenant_cnx)
-        
+
         # start sync process
         self.swsync.process()
-        
+
         # Now verify dest
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
@@ -202,16 +203,16 @@ class TestSyncer(unittest.TestCase):
             ald = self.get_account_detail(account_id,
                                           self.d_admin_token, 'dest')
             self.verify_aco_diff(alo, ald)
-    
+
     def test_02_sync_many_empty_account(self):
-        """ Many empty account with meta data
+        """Many empty account with meta data
         """
         index = {}
         # Create account
         self.created = filler.create_swift_account(self.o_ks_client,
                                                    self.pile,
                                                    3, 1, index)
-        
+
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
             # Post meta data on account
@@ -220,10 +221,10 @@ class TestSyncer(unittest.TestCase):
                                             self.default_user_password,
                                             auth_version=2)
             filler.create_account_meta(tenant_cnx)
-        
+
         # Start sync process
         self.swsync.process()
-        
+
         # Now verify dest
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
@@ -233,9 +234,8 @@ class TestSyncer(unittest.TestCase):
                                           self.d_admin_token, 'dest')
             self.verify_aco_diff(alo, ald)
 
-
     def test_03_sync_many_accounts_with_many_containers_meta(self):
-        """ Many accounts with many containers and container meta data
+        """Many accounts with many containers and container meta data
         """
         index = {}
         index_container = {}
@@ -252,10 +252,10 @@ class TestSyncer(unittest.TestCase):
                                             auth_version=2)
             acc = (account, account_id)
             filler.create_containers(tenant_cnx, acc, 3, index_container)
-        
+
         # Start sync process
         self.swsync.process()
-        
+
         # Now verify dest
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
@@ -271,16 +271,15 @@ class TestSyncer(unittest.TestCase):
                 self.assertDictEqual(do, match[0])
             # Verify container details
             clo_c_names = [d['name'] for d in clo]
-            cld_c_names = [d['name'] for d in cld]
             for c_name in clo_c_names:
                 cdo = self.get_container_detail(account_id, self.o_admin_token,
                                                 'orig', c_name)
                 cdd = self.get_container_detail(account_id, self.d_admin_token,
                                                 'dest', c_name)
             self.verify_aco_diff(cdo, cdd)
-    
+
     def test_04_sync_many_accounts_many_containers_and_obj_meta(self):
-        """ Many accounts with many containers and some object
+        """Many accounts with many containers and some object
         """
         index = {}
         index_container = {}
@@ -298,10 +297,10 @@ class TestSyncer(unittest.TestCase):
             acc = (account, account_id)
             filler.create_containers(tenant_cnx, acc, 1, index_container)
             filler.create_objects(tenant_cnx, acc, 1, 2048, index_container)
-        
+
         # Start sync process
         self.swsync.process()
-        
+
         # Now verify dest
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
@@ -334,16 +333,16 @@ class TestSyncer(unittest.TestCase):
                     self.verify_aco_diff(objd_o, objd_d)
                     # Verify content
                     self.assertEqual(objd_o[1], objd_d[1])
-    
+
     def test_05_empty_account_two_pass(self):
-        """ Account modified two sync pass
+        """Account modified two sync pass
         """
         index = {}
         # create account
         self.created = filler.create_swift_account(self.o_ks_client,
                                                    self.pile,
                                                    3, 1, index)
-        
+
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
             # post meta data on account
@@ -352,10 +351,10 @@ class TestSyncer(unittest.TestCase):
                                             self.default_user_password,
                                             auth_version=2)
             filler.create_account_meta(tenant_cnx)
-        
+
         # start sync process
         self.swsync.process()
-        
+
         # Add more meta to account
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
@@ -372,14 +371,14 @@ class TestSyncer(unittest.TestCase):
             a_meta_k_names = [k.split('-')[-1] for k in a_meta]
             headers = {}
             headers['X-Account-Meta-a1'] = 'b1'
-            headers["X-Remove-Account-Meta-%s" %a_meta_k_names[0]] = 'x'
-            headers["X-Account-Meta-%s" %a_meta_k_names[1]] = 'b2'
+            headers["X-Remove-Account-Meta-%s" % a_meta_k_names[0]] = 'x'
+            headers["X-Account-Meta-%s" % a_meta_k_names[1]] = 'b2'
             self.post_account(account_id, token,
-                              'orig', headers = headers)
+                              'orig', headers=headers)
 
         # Re - start sync process
         self.swsync.process()
-        
+
         # Now verify dest
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
@@ -395,7 +394,7 @@ class TestSyncer(unittest.TestCase):
                 user_info_list = [user[1] for user in v]
                 account_id = k[1]
                 o_account_url, d_account_url = \
-                        self.create_st_account_url(account_id)
+                    self.create_st_account_url(account_id)
                 # Remove account content on origin and destination
                 self.delete_account_cont(o_account_url, self.o_admin_token)
                 self.delete_account_cont(d_account_url, self.d_admin_token)
