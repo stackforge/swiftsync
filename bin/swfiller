@@ -72,9 +72,9 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    sw_c_concu = int(utils.get_config('filler',
+    sw_c_concu = int(utils.get_config('concurrency',
                                       'filler_swift_client_concurrency'))
-    ks_c_concu = int(utils.get_config('filler',
+    ks_c_concu = int(utils.get_config('concurrency',
                                       'filler_keystone_client_concurrency'))
     pile = eventlet.GreenPile(sw_c_concu)
     pool = eventlet.GreenPool(ks_c_concu)
