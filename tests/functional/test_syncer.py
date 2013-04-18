@@ -101,7 +101,8 @@ class TestSyncer(unittest.TestCase):
     def verify_aco_diff(self, alo, ald):
         # Verify account, container, object diff in HEAD struct
         for k, v in alo[0].items():
-            if k not in ('x-timestamp', 'x-trans-id', 'date'):
+            if k not in ('x-timestamp', 'x-trans-id',
+                         'date', 'last-modified'):
                 self.assertEqual(ald[0][k], v, msg='%s differs' % k)
 
     def delete_account_cont(self, account_url, token):
@@ -169,10 +170,42 @@ class TestSyncer(unittest.TestCase):
         return {k: v for k, v in d[0].iteritems()
                 if k.startswith('x-account-meta')}
 
+    def get_container_meta(self, account_id, token, s_type, container):
+        d = self.get_container_detail(account_id, token, s_type, container)
+        return {k: v for k, v in d[0].iteritems()
+                if k.startswith('x-container-meta')}
+
     def post_account(self, account_id, token, s_type, headers):
         url = self.get_url(account_id, s_type)
         cnx = sclient.http_connection(url)
         sclient.post_account("", token, headers, http_conn=cnx)
+
+    def post_container(self, account_id, token, s_type, container, headers):
+        url = self.get_url(account_id, s_type)
+        cnx = sclient.http_connection(url)
+        sclient.post_container("", token, container, headers, http_conn=cnx)
+
+    def put_container(self, account_id, token, s_type, container):
+        url = self.get_url(account_id, s_type)
+        cnx = sclient.http_connection(url)
+        sclient.put_container("", token, container, http_conn=cnx)
+
+    def post_object(self, account_id, token, s_type, container, name, headers):
+        url = self.get_url(account_id, s_type)
+        cnx = sclient.http_connection(url)
+        sclient.post_object("", token, container, name, headers, http_conn=cnx)
+
+    def put_object(self, account_id, token, s_type, container, name, content):
+        url = self.get_url(account_id, s_type)
+        cnx = sclient.http_connection(url)
+        sclient.put_object("", token, container, name, content, http_conn=cnx)
+
+    def delete_object(self, account_id, token, s_type,
+                      container, name):
+        url = self.get_url(account_id, s_type)
+        cnx = sclient.http_connection(url)
+        sclient.delete_object("", token, container, name,
+                              http_conn=cnx)
 
     def test_01_sync_one_empty_account(self):
         """one empty account with meta data
@@ -186,7 +219,7 @@ class TestSyncer(unittest.TestCase):
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
             # post meta data on account
-            tenant_cnx = sclient.connection(self.o_st,
+            tenant_cnx = sclient.Connection(self.o_st,
                                             "%s:%s" % (account, username),
                                             self.default_user_password,
                                             auth_version=2)
@@ -334,8 +367,8 @@ class TestSyncer(unittest.TestCase):
                     # Verify content
                     self.assertEqual(objd_o[1], objd_d[1])
 
-    def test_05_empty_account_two_pass(self):
-        """Account modified two sync pass
+    def test_05_account_two_passes(self):
+        """Account modified two sync passes
         """
         index = {}
         # create account
@@ -387,6 +420,182 @@ class TestSyncer(unittest.TestCase):
             ald = self.get_account_detail(account_id,
                                           self.d_admin_token, 'dest')
             self.verify_aco_diff(alo, ald)
+
+    def test_06_container_two_passes(self):
+        """Containers modified two sync passes
+        """
+        index = {}
+        index_container = {}
+        # Create account
+        self.created = filler.create_swift_account(self.o_ks_client,
+                                                   self.pile,
+                                                   3, 1, index)
+
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            tenant_cnx = sclient.Connection(self.o_st,
+                                            "%s:%s" % (account, username),
+                                            self.default_user_password,
+                                            auth_version=2)
+            acc = (account, account_id)
+            filler.create_containers(tenant_cnx, acc, 3, index_container)
+
+        # Start sync process
+        self.swsync.process()
+
+        # Modify container in account
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            tenant_cnx = sclient.Connection(self.o_st,
+                                            "%s:%s" % (account, username),
+                                            self.default_user_password,
+                                            auth_version=2)
+
+            token = tenant_cnx.get_auth()[1]
+            # Modify an existing container meta
+            clo = self.list_containers(account_id,
+                                       token, 'orig')
+            co_name = clo[0]['name']
+            c_meta = self.get_container_meta(account_id,
+                                             token, 'orig',
+                                             co_name)
+            c_meta_k_names = [k.split('-')[-1] for k in c_meta]
+            headers = {}
+            headers['X-Container-Meta-a1'] = 'b1'
+            headers["X-Remove-Container-Meta-%s" % c_meta_k_names[0]] = 'x'
+            headers["X-Container-Meta-%s" % c_meta_k_names[1]] = 'b2'
+            self.post_container(account_id, token,
+                                'orig',
+                                headers=headers,
+                                container=co_name)
+            # Add a container
+            self.put_container(account_id, token, 'orig', 'foobar')
+            # TODO(fbo) Delete a container
+
+        # Re - Start sync process
+        self.swsync.process()
+
+        # Now verify dest
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            # Verify container listing
+            clo = self.list_containers(account_id,
+                                       self.o_admin_token, 'orig')
+            cld = self.list_containers(account_id,
+                                       self.d_admin_token, 'dest')
+            self.assertEqual(len(clo), len(cld))
+            for do in clo:
+                match = [dd for dd in cld if dd['name'] == do['name']]
+                self.assertEqual(len(match), 1)
+                self.assertDictEqual(do, match[0])
+            # Verify container details
+            clo_c_names = [d['name'] for d in clo]
+            for c_name in clo_c_names:
+                cdo = self.get_container_detail(account_id, self.o_admin_token,
+                                                'orig', c_name)
+                cdd = self.get_container_detail(account_id, self.d_admin_token,
+                                                'dest', c_name)
+                self.verify_aco_diff(cdo, cdd)
+
+    def test_07_object_two_passes(self):
+        """Objects modified two passes
+        """
+        index = {}
+        index_container = {}
+        # Create account
+        self.created = filler.create_swift_account(self.o_ks_client,
+                                                   self.pile,
+                                                   1, 1, index)
+
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            tenant_cnx = sclient.Connection(self.o_st,
+                                            "%s:%s" % (account, username),
+                                            self.default_user_password,
+                                            auth_version=2)
+            acc = (account, account_id)
+            filler.create_containers(tenant_cnx, acc, 1, index_container)
+            filler.create_objects(tenant_cnx, acc, 3, 2048, index_container)
+
+        # Start sync process
+        self.swsync.process()
+
+        # Modify objects in containers
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            tenant_cnx = sclient.Connection(self.o_st,
+                                            "%s:%s" % (account, username),
+                                            self.default_user_password,
+                                            auth_version=2)
+
+            token = tenant_cnx.get_auth()[1]
+            c_o = self.list_objects_in_containers(account_id, token, 'orig')
+            for cont, objs in c_o.iteritems():
+                for obj in objs:
+                    # Modify object meta
+                    obj_d, data = self.get_object_detail(account_id,
+                                                         token, 'orig',
+                                                         cont, obj['name'])
+                    meta = {k: v for k, v in obj_d.iteritems()
+                            if k.startswith('x-object-meta')}
+                    meta_k_names = [k.split('-')[-1] for k in meta]
+                    headers = {}
+                    headers['X-Object-Meta-a1'] = 'b1'
+                    headers["X-Remove-Object-Meta-%s" % meta_k_names[0]] = 'x'
+                    headers["X-Object-Meta-%s" % meta_k_names[1]] = 'b2'
+                    self.post_object(account_id, token,
+                                     'orig',
+                                     headers=headers,
+                                     container=cont,
+                                     name=obj['name'])
+                # Create an object
+                self.put_object(account_id, token, 'orig',
+                                cont, 'foofoo', 'barbarbar')
+
+                o_names = [o['name'] for o in objs]
+                # Delete an object
+                name = o_names[0]
+                self.delete_object(account_id, token, 'orig',
+                                   cont, name)
+
+        # Start sync process
+        self.swsync.process()
+
+        # Now verify dest
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            # Verify container listing
+            olo = self.list_objects_in_containers(account_id,
+                                                  self.o_admin_token, 'orig')
+            old = self.list_objects_in_containers(account_id,
+                                                  self.d_admin_token, 'dest')
+
+            # Verify we have the same amount of container
+            self.assertListEqual(olo.keys(), old.keys())
+            # For each container
+            for c, objs in olo.items():
+                for obj in objs:
+                    # Verify first object detail returned by container server
+                    match = [od for od in old[c] if od['name'] == obj['name']]
+                    self.assertEqual(len(match), 1)
+                    obj_d = match[0]
+                    a = obj.copy()
+                    b = obj_d.copy()
+                    del a['last_modified']
+                    del b['last_modified']
+                    self.assertDictEqual(a, b)
+                # Verify object details from object server
+                obj_names = [d['name'] for d in olo[c]]
+                for obj_name in obj_names:
+                    objd_o = self.get_object_detail(account_id,
+                                                    self.o_admin_token, 'orig',
+                                                    c, obj_name)
+                    objd_d = self.get_object_detail(account_id,
+                                                    self.d_admin_token, 'dest',
+                                                    c, obj_name)
+                    self.verify_aco_diff(objd_o, objd_d)
+                    # Verify content
+                    self.assertEqual(objd_o[1], objd_d[1])
 
     def tearDown(self):
         if self.created:
