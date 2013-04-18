@@ -97,6 +97,7 @@ class TestSyncer(unittest.TestCase):
         return o_account_url, d_account_url
 
     def verify_aco_diff(self, alo, ald):
+        # Verify account, container, object diff in HEAD struct
         for k, v in alo[0].items():
             if k not in ('x-timestamp', 'x-trans-id', 'date'):
                 self.assertEqual(ald[0][k], v, msg='%s differs' %k)
@@ -149,6 +150,19 @@ class TestSyncer(unittest.TestCase):
         cd = self.get_container_detail(account_id, token, s_type, container)
         return cd[1]
 
+    def list_objects_in_containers(self, account_id, token, s_type):
+        ret = {}
+        cl = self.list_containers(account_id, token, s_type)
+        for c in [c['name'] for c in cl]:
+            objs = self.list_objects(account_id, token, s_type, c)
+            ret[c] = objs
+        return ret
+
+    def get_object_detail(self, account_id, token, s_type, container, obj):
+        url = self.get_url(account_id, s_type)
+        cnx = sclient.http_connection(url)
+        return sclient.get_object("", token, container, obj, http_conn=cnx)
+
     def test_01_sync_one_empty_account(self):
         """ One empty account with meta data
         """
@@ -176,7 +190,7 @@ class TestSyncer(unittest.TestCase):
                                           self.o_admin_token, 'orig')
             ald = self.get_account_detail(account_id,
                                           self.d_admin_token, 'dest')
-            self.verify_account_diff(alo, ald)
+            self.verify_aco_diff(alo, ald)
     
     def test_02_sync_many_empty_account(self):
         """ Many empty account with meta data
@@ -205,18 +219,18 @@ class TestSyncer(unittest.TestCase):
                                           self.o_admin_token, 'orig')
             ald = self.get_account_detail(account_id,
                                           self.d_admin_token, 'dest')
-            self.verify_account_diff(alo, ald)
+            self.verify_aco_diff(alo, ald)
 
 
-    def test_03_sync_one_account_with_container_meta(self):
-        """ One account with containers and container meta data
+    def test_03_sync_many_accounts_with_many_containers_meta(self):
+        """ Many accounts with many containers and container meta data
         """
         index = {}
         index_container = {}
         # Create account
         self.created = filler.create_swift_account(self.o_ks_client,
                                                    self.pile,
-                                                   1, 1, index)
+                                                   3, 1, index)
 
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
@@ -225,7 +239,7 @@ class TestSyncer(unittest.TestCase):
                                             self.default_user_password,
                                             auth_version=2)
             acc = (account, account_id)
-            filler.create_containers(tenant_cnx, acc, 1, index_container)
+            filler.create_containers(tenant_cnx, acc, 3, index_container)
         
         # Start sync process
         self.swsync.process()
@@ -251,8 +265,62 @@ class TestSyncer(unittest.TestCase):
                 cdd = self.get_container_detail(account_id, self.d_admin_token,
                                                 'dest', c_name)
             self.verify_aco_diff(cdo, cdd)
+    
+    def test_04_sync_many_accounts_many_containers_and_obj_meta(self):
+        """ Many accounts with many containers and some object
+        """
+        index = {}
+        index_container = {}
+        # Create account
+        self.created = filler.create_swift_account(self.o_ks_client,
+                                                   self.pile,
+                                                   1, 1, index)
 
-                                     
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            tenant_cnx = sclient.Connection(self.o_st,
+                                            "%s:%s" % (account, username),
+                                            self.default_user_password,
+                                            auth_version=2)
+            acc = (account, account_id)
+            filler.create_containers(tenant_cnx, acc, 1, index_container)
+            filler.create_objects(tenant_cnx, acc, 1, 2048, index_container)
+        
+        # Start sync process
+        self.swsync.process()
+        
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            # Verify container listing
+            olo = self.list_objects_in_containers(account_id,
+                                                  self.o_admin_token, 'orig')
+            old = self.list_objects_in_containers(account_id,
+                                                  self.d_admin_token, 'dest')
+
+            # Verify we have the same amount of container
+            self.assertListEqual(olo.keys(), old.keys())
+            # For each container
+            for c, objs in olo.items():
+                for obj in objs:
+                    # Verify first object detail returned by container
+                    # server
+                    match = [od for od in old[c] if od['name'] == obj['name']]
+                    self.assertEqual(len(match), 1)
+                    obj_d = match[0]
+                    self.assertDictEqual(obj, obj_d)
+                # Verify object details from object server
+                obj_names = [d['name'] for d in olo[c]]
+                for obj_name in obj_names:
+                    objd_o = self.get_object_detail(account_id,
+                                                    self.o_admin_token, 'orig',
+                                                    c, obj_name)
+                    objd_d = self.get_object_detail(account_id,
+                                                    self.d_admin_token, 'dest',
+                                                    c, obj_name)
+                    self.verify_aco_diff(objd_o, objd_d)
+                    # Verify content
+                    self.assertEqual(objd_o[1], objd_d[1])
+
     def tearDown(self):
         if self.created:
             for k, v in self.created.items():
