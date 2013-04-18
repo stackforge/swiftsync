@@ -163,27 +163,38 @@ class TestSyncer(unittest.TestCase):
         cnx = sclient.http_connection(url)
         return sclient.get_object("", token, container, obj, http_conn=cnx)
 
+    def get_account_meta(self, account_id, token, s_type):
+        d = self.get_account_detail(account_id, token, s_type) 
+        return {k:v for k,v in d[0].iteritems()\
+                if k.startswith('x-account-meta')}
+
+    def post_account(self, account_id, token, s_type, headers):
+        url = self.get_url(account_id, s_type)
+        cnx = sclient.http_connection(url)
+        sclient.post_account("", token, headers, http_conn=cnx)
+
     def test_01_sync_one_empty_account(self):
-        """ One empty account with meta data
+        """ one empty account with meta data
         """
         index = {}
-        # Create account
+        # create account
         self.created = filler.create_swift_account(self.o_ks_client,
                                                    self.pile,
                                                    1, 1, index)
         
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
-            # Post meta data on account
-            tenant_cnx = sclient.Connection(self.o_st,
+            # post meta data on account
+            tenant_cnx = sclient.connection(self.o_st,
                                             "%s:%s" % (account, username),
                                             self.default_user_password,
                                             auth_version=2)
             filler.create_account_meta(tenant_cnx)
         
-        # Start sync process
+        # start sync process
         self.swsync.process()
         
+        # Now verify dest
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
             alo = self.get_account_detail(account_id,
@@ -213,6 +224,7 @@ class TestSyncer(unittest.TestCase):
         # Start sync process
         self.swsync.process()
         
+        # Now verify dest
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
             alo = self.get_account_detail(account_id,
@@ -244,6 +256,7 @@ class TestSyncer(unittest.TestCase):
         # Start sync process
         self.swsync.process()
         
+        # Now verify dest
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
             # Verify container listing
@@ -289,6 +302,7 @@ class TestSyncer(unittest.TestCase):
         # Start sync process
         self.swsync.process()
         
+        # Now verify dest
         for account, account_id, username in \
                 self.extract_created_a_u_iter(self.created):
             # Verify container listing
@@ -320,6 +334,60 @@ class TestSyncer(unittest.TestCase):
                     self.verify_aco_diff(objd_o, objd_d)
                     # Verify content
                     self.assertEqual(objd_o[1], objd_d[1])
+    
+    def test_05_empty_account_two_pass(self):
+        """ Account modified two sync pass
+        """
+        index = {}
+        # create account
+        self.created = filler.create_swift_account(self.o_ks_client,
+                                                   self.pile,
+                                                   3, 1, index)
+        
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            # post meta data on account
+            tenant_cnx = sclient.Connection(self.o_st,
+                                            "%s:%s" % (account, username),
+                                            self.default_user_password,
+                                            auth_version=2)
+            filler.create_account_meta(tenant_cnx)
+        
+        # start sync process
+        self.swsync.process()
+        
+        # Add more meta to account
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            # Modify meta data on account
+            tenant_cnx = sclient.Connection(self.o_st,
+                                            "%s:%s" % (account, username),
+                                            self.default_user_password,
+                                            auth_version=2)
+            token = tenant_cnx.get_auth()[1]
+            # Remove one, modify one, and add one meta
+            a_meta = self.get_account_meta(account_id,
+                                           token,
+                                           'orig')
+            a_meta_k_names = [k.split('-')[-1] for k in a_meta]
+            headers = {}
+            headers['X-Account-Meta-a1'] = 'b1'
+            headers["X-Remove-Account-Meta-%s" %a_meta_k_names[0]] = 'x'
+            headers["X-Account-Meta-%s" %a_meta_k_names[1]] = 'b2'
+            self.post_account(account_id, token,
+                              'orig', headers = headers)
+
+        # Re - start sync process
+        self.swsync.process()
+        
+        # Now verify dest
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            alo = self.get_account_detail(account_id,
+                                          self.o_admin_token, 'orig')
+            ald = self.get_account_detail(account_id,
+                                          self.d_admin_token, 'dest')
+            self.verify_aco_diff(alo, ald)
 
     def tearDown(self):
         if self.created:
