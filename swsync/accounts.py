@@ -83,12 +83,10 @@ class Accounts(object):
                     account_id, e.http_reason))
                 return
 
-        if int(dest_account_headers['x-account-container-count']) > \
-           int(orig_account_headers['x-account-container-count']):
-            self.container_cls.delete_container(dest_storage_cnx,
-                                                dest_token,
-                                                orig_containers,
-                                                dest_containers)
+        self.container_cls.delete_container(dest_storage_cnx,
+                                            dest_token,
+                                            orig_containers,
+                                            dest_containers)
 
         do_headers = False
         if len(dest_account_headers) != len(orig_account_headers):

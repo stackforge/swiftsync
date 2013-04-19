@@ -20,13 +20,9 @@
 #   Last-Modified middleware must be installed in the proxy-server
 #   pipeline.
 
-# ENV:
-# User used to synchronize both swift must own the ResellerAdmin role
-# in each keystone
-#
-# TODO(fbo):
-# SetUp must setup connector for filler and syncer
-# Each test must configure its environement according to test case
+# To start this functional test the admin users (on both keystone) used
+# to synchronize the destination swift must own the ResellerAdmin role in
+# keystone.
 
 import eventlet
 import unittest
@@ -189,6 +185,11 @@ class TestSyncer(unittest.TestCase):
         url = self.get_url(account_id, s_type)
         cnx = sclient.http_connection(url)
         sclient.put_container("", token, container, http_conn=cnx)
+
+    def delete_container(self, account_id, token, s_type, container):
+        url = self.get_url(account_id, s_type)
+        cnx = sclient.http_connection(url)
+        sclient.delete_container("", token, container, http_conn=cnx)
 
     def post_object(self, account_id, token, s_type, container, name, headers):
         url = self.get_url(account_id, s_type)
@@ -468,9 +469,13 @@ class TestSyncer(unittest.TestCase):
                                 'orig',
                                 headers=headers,
                                 container=co_name)
-            # Add a container
+            # Add a some more container
             self.put_container(account_id, token, 'orig', 'foobar')
-            # TODO(fbo) Delete a container
+            self.put_container(account_id, token, 'orig', 'foobar1')
+            self.put_container(account_id, token, 'orig', 'foobar2')
+            # Delete one container
+            co_name = clo[1]['name']
+            self.delete_container(account_id, token, 'orig', co_name)
 
         # Re - Start sync process
         self.swsync.process()
