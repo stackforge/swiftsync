@@ -95,6 +95,9 @@ class FakeSWConnection(object):
     def get_account(self, *args, **kargs):
         pass
 
+    def post_account(self, *args, **kargs):
+        pass
+
 
 class FakeSWObject(object):
     def __init__(self, object_name):
