@@ -127,9 +127,12 @@ class TestSyncer(unittest.TestCase):
             raise Exception('Unknown type')
         return url
 
-    def get_account_detail(self, account_id, token, s_type):
+    def get_cnx(self, account_id, s_type):
         url = self.get_url(account_id, s_type)
-        cnx = sclient.http_connection(url)
+        return sclient.http_connection(url)
+
+    def get_account_detail(self, account_id, token, s_type):
+        cnx = self.get_cnx(account_id, s_type)
         return sclient.get_account(None, token,
                                    http_conn=cnx,
                                    full_listing=True)
@@ -139,8 +142,7 @@ class TestSyncer(unittest.TestCase):
         return cd[1]
 
     def get_container_detail(self, account_id, token, s_type, container):
-        url = self.get_url(account_id, s_type)
-        cnx = sclient.http_connection(url)
+        cnx = self.get_cnx(account_id, s_type)
         return sclient.get_container(None, token, container,
                                      http_conn=cnx, full_listing=True)
 
@@ -157,8 +159,7 @@ class TestSyncer(unittest.TestCase):
         return ret
 
     def get_object_detail(self, account_id, token, s_type, container, obj):
-        url = self.get_url(account_id, s_type)
-        cnx = sclient.http_connection(url)
+        cnx = self.get_cnx(account_id, s_type)
         return sclient.get_object("", token, container, obj, http_conn=cnx)
 
     def get_account_meta(self, account_id, token, s_type):
@@ -172,39 +173,32 @@ class TestSyncer(unittest.TestCase):
                 if k.startswith('x-container-meta')}
 
     def post_account(self, account_id, token, s_type, headers):
-        url = self.get_url(account_id, s_type)
-        cnx = sclient.http_connection(url)
+        cnx = self.get_cnx(account_id, s_type)
         sclient.post_account("", token, headers, http_conn=cnx)
 
     def post_container(self, account_id, token, s_type, container, headers):
-        url = self.get_url(account_id, s_type)
-        cnx = sclient.http_connection(url)
+        cnx = self.get_cnx(account_id, s_type)
         sclient.post_container("", token, container, headers, http_conn=cnx)
 
     def put_container(self, account_id, token, s_type, container):
-        url = self.get_url(account_id, s_type)
-        cnx = sclient.http_connection(url)
+        cnx = self.get_cnx(account_id, s_type)
         sclient.put_container("", token, container, http_conn=cnx)
 
     def delete_container(self, account_id, token, s_type, container):
-        url = self.get_url(account_id, s_type)
-        cnx = sclient.http_connection(url)
+        cnx = self.get_cnx(account_id, s_type)
         sclient.delete_container("", token, container, http_conn=cnx)
 
     def post_object(self, account_id, token, s_type, container, name, headers):
-        url = self.get_url(account_id, s_type)
-        cnx = sclient.http_connection(url)
+        cnx = self.get_cnx(account_id, s_type)
         sclient.post_object("", token, container, name, headers, http_conn=cnx)
 
     def put_object(self, account_id, token, s_type, container, name, content):
-        url = self.get_url(account_id, s_type)
-        cnx = sclient.http_connection(url)
+        cnx = self.get_cnx(account_id, s_type)
         sclient.put_object("", token, container, name, content, http_conn=cnx)
 
     def delete_object(self, account_id, token, s_type,
                       container, name):
-        url = self.get_url(account_id, s_type)
-        cnx = sclient.http_connection(url)
+        cnx = self.get_cnx(account_id, s_type)
         sclient.delete_object("", token, container, name,
                               http_conn=cnx)
 
@@ -556,6 +550,10 @@ class TestSyncer(unittest.TestCase):
                 # Create an object
                 self.put_object(account_id, token, 'orig',
                                 cont, 'foofoo', 'barbarbar')
+                self.put_object(account_id, token, 'orig',
+                                cont, 'foofoo1', 'barbarbar')
+                self.put_object(account_id, token, 'orig',
+                                cont, 'foofoo2', 'barbarbar')
 
                 o_names = [o['name'] for o in objs]
                 # Delete an object
