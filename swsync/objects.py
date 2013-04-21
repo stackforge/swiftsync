@@ -60,7 +60,7 @@ def get_object(storage_url, token,
 
     if not swift.common.http.is_success(resp.status):
         resp.read()
-        #TODO: logging
+        # TODO(chmou): logging
         raise swiftclient.ClientException(
             'status %s %s' % (resp.status, resp.reason))
 
