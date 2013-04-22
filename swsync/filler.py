@@ -161,7 +161,8 @@ def delete_account(client, user_id, acc):
 
 
 def swift_cnx(acc, user):
-    cnx = sclient.Connection(get_config('auth', 'keystone_origin'),
+    ks_url = get_config('auth', 'keystone_origin')
+    cnx = sclient.Connection(ks_url,
                              user=user,
                              key=get_config('filler', 'default_user_password'),
                              tenant_name=acc[0],
@@ -220,8 +221,8 @@ def create_containers(cnx, acc, c_amount, index_containers=None):
     containers_d = index_containers.setdefault(acc, {})
     for i in range(c_amount):
         container_name = customize(get_rand_str('container_'), i % 3)
-        # Got some errors when triying to reach container with space
-        # in their name.
+        # python-swiftclient does not quote correctly meta ... need
+        # to investigate why it does not work when key are utf8
 #        meta_keys = [customize(m, (i+1)%3) for m in
 #                     map(get_rand_str, ('X-Container-Meta-',) * 3)]
         meta_keys = map(get_rand_str, ('X-Container-Meta-',) * 3)
@@ -234,9 +235,25 @@ def create_containers(cnx, acc, c_amount, index_containers=None):
         try:
             cnx.put_container(container_name, headers=copy.copy(meta))
             containers_d[container_name] = {'meta': meta, 'objects': []}
-        except ClientException:
-            logging.warning("Unable to create container %s" %
-                            container_name.encode('ascii', 'ignore'))
+        except ClientException, e:
+            logging.warning("Unable to create container %s due to %s" %
+                            (container_name.encode('ascii', 'ignore'),
+                             e))
+
+
+def create_account_meta(cnx):
+    meta_keys = []
+    meta_values = []
+    for i in range(3):
+        # python-swiftclient does not quote correctly meta ... need
+        # to investigate why it does not work when key are utf8
+        #meta_keys.extend([customize(m, (i + 1) % 3) for m in
+        #             map(get_rand_str, ('X-Account-Meta-',) * 1)])
+        meta_keys.extend(map(get_rand_str, ('X-Account-Meta-',) * 3))
+        meta_values.extend([customize(m, (i + 1) % 3) for m in
+                           map(get_rand_str, ('meta_v_',) * 1)])
+    meta = dict(zip(meta_keys, meta_values))
+    cnx.post_account(headers=meta)
 
 
 def fill_swift(pool, created_account, c_amount,
@@ -245,6 +262,8 @@ def fill_swift(pool, created_account, c_amount,
                         o_amount, fmax, index_containers):
         cnx = swift_cnx(acc, users[0][0])
         # Use the first user we find for fill in the swift account
+        #TODO(fbo) must keep track of the account meta
+        create_account_meta(cnx)
         create_containers(cnx, acc, c_amount, index_containers)
         create_objects(cnx, acc, o_amount, fmax, index_containers)
     i = 0

@@ -122,9 +122,10 @@ class Containers(object):
             do_headers = True
         else:
             for k, v in orig_container_headers.iteritems():
-                if k.startswith('x-container-meta') and \
-                   dest_container_headers[k] != v:
-                    do_headers = True
+                if (k.startswith('x-container-meta') and
+                        k in dest_container_headers):
+                    if dest_container_headers[k] != v:
+                        do_headers = True
 
         if do_headers:
             orig_metadata_headers = self.container_headers_clean(
@@ -149,6 +150,8 @@ class Containers(object):
         set1 = set((x['last_modified'], x['name']) for x in orig_objects)
         set2 = set((x['last_modified'], x['name']) for x in dest_objects)
         diff = set1 - set2
+        set1 = set(x['name'] for x in orig_objects)
+        set2 = set(x['name'] for x in dest_objects)
         delete_diff = set2 - set1
 
         if not diff and not delete_diff:
@@ -172,5 +175,5 @@ class Containers(object):
                        dest_storage_cnx,
                        dest_token,
                        container_name,
-                       obj[1])
+                       obj)
         pool.waitall()

@@ -71,6 +71,10 @@ class TestAccountSyncMetadata(TestAccountBase):
         class Containers(object):
             def sync(*args, **kwargs):
                 sync_container_called.append(args)
+
+            def delete_container(*args, **kwargs):
+                pass
+
         self.accounts_cls.container_cls = Containers()
         self.accounts_cls.sync_account("http://orig", "otoken",
                                        "http://dest", "dtoken")
@@ -248,6 +252,9 @@ class TestAccountSync(TestAccountBase):
         class Containers(object):
             def sync(*args, **kwargs):
                 ret.append(args)
+
+            def delete_container(*args, **kwargs):
+                pass
         self.accounts_cls.container_cls = Containers()
 
         tenant_name = fakes.TENANTS_LIST.keys()[0]
