@@ -22,6 +22,7 @@ import unittest2
 
 import mox
 import stubout
+from swsync import utils
 
 
 class TestCase(unittest2.TestCase):
@@ -30,6 +31,7 @@ class TestCase(unittest2.TestCase):
         super(TestCase, self).setUp()
         self.mox = mox.Mox()
         self.stubs = stubout.StubOutForTesting()
+        utils.CONFIG = utils.parse_ini(utils.SAMPLE_INIFILE)
 
     def tearDown(self):
         self.mox.UnsetStubs()
