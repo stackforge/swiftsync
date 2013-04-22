@@ -206,7 +206,7 @@ def create_objects(cnx, acc, o_amount, fmax, index_containers):
                              "(filename: %s,\tsize: %.3f KB)" %
                              (container,
                              object_name.encode('ascii', 'ignore'),
-                             float(len(data))/1024))
+                             float(len(data)) / 1024))
                 obj_info = {'object_info':
                             (object_name, etag, len(data)), 'meta': meta}
                 containers_d[container]['objects'].append(obj_info)

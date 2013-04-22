@@ -20,8 +20,8 @@
 #   Last-Modified middleware must be installed in the proxy-server
 #   pipeline.
 
-import unittest
 import swiftclient
+import unittest
 
 CONF = {
     'user': ('demo:demo', 'wxcvbn'),
