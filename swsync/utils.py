@@ -22,6 +22,8 @@ import os
 CONFIG = None
 curdir = os.path.abspath(os.path.dirname(__file__))
 INIFILE = os.path.abspath(os.path.join(curdir, '..', 'etc', "config.ini"))
+SAMPLE_INIFILE = os.path.abspath(os.path.join(curdir, '..',
+                                              'etc', "config.ini-sample"))
 
 
 class ConfigurationError(Exception):

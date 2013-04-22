@@ -19,5 +19,5 @@ index_containers_path = /tmp/swift_filler_containers_index.pkl
 [concurrency]
 filler_keystone_client_concurrency = 5
 filler_swift_client_concurrency = 10
-# This is usually  bound to the max open files.
+# This is usually bound to the max open files.
 sync_swift_client_concurrency = 10
