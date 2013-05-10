@@ -39,7 +39,7 @@ the ResellerAdmin role to the admin user in keystone
 (refer to swsync usage later in this readme) and start
 nose as follow :
 
-   $ nosetests -v --nologcapture tests/functional/test_syncer.py
+    $ nosetests -v --nologcapture tests/functional/test_syncer.py
 
 swiftsync installation
 ----------------------
@@ -103,7 +103,7 @@ will keep a list a user and tenant we have created in keystone.
 So to clean all account and data the create mode has created
 use the deletion mode:
 
- $ swfiller --delete --config etc/config.ini
+    $ swfiller --delete --config etc/config.ini
 
 swsync usage
 ------------
