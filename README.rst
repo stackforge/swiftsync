@@ -1,1 +1,0 @@
-A massive Swift syncer.
