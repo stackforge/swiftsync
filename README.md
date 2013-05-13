@@ -143,7 +143,7 @@ The way it will act to do that is as follow:
 
 To start the synchronization process you need to edit
 the configuration file and configure keystone_dest
-and keystone_dest_credentials (Fix it). Then to start
+and keystone_dest_credentials. Then to start
 the process simply :
 
     $ swsync --config etc/config.ini
@@ -151,12 +151,16 @@ the process simply :
 As mention above the sync process won't
 replicate origin keystone accounts to the destination 
 keystone so swift accounts on destination will
-not work until you start a keystone database synchronization.
+not work until you start a keystone database synchronization. But be sure
+when performing the database synchronization to have swift endpoints
+configured to reference the destination swift.
 
 swsync will take care of already synchronized containers/objects. When
 re-starting swsync it will only synchronize data that have changed.
-The tool can for instance be launched by a cron
-job to perform diff synchronization each night.
+swsync has been designed to be run and run again and not ensuring that the
+first pass goes well, if for example there is network failure swsync will
+just skip it and hope to do it on the next run. So the tool can for instance
+be launched by a cron job to perform diff synchronization each night.
 
 Swift Middleware last-modified
 ------------------------------
@@ -166,14 +170,16 @@ synchronization process by adding a last modified metadata
 to container header. The idea behind this is to only
 process the container whether the timestamp is greater
 on origin avoiding uselessly walking through container.
-But the swsync tool does not use this meta for
-now. If you want to contribute feel free to add it !
+When performing some tests we figured out that synchronization
+performances was fast enough for our use case so we decided
+to not support this metadata in swsync for now. But If you want to
+contribute feel free to add it !
 
-Synchronization performances
-----------------------------
 
 Things to considers
 -------------------
 
-swfiller and swsync are not designed to work
-with swift v1.0 authentication.
+swfiller and swsync are not designed to work with swift v1.0 authentication.
+We experienced some performances troubles when doing large synchronization
+with token validation. Having to validate the token each time could come back with
+error due to keystone capability to handle large amount of token validation requests.
