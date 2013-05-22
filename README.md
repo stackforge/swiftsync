@@ -146,7 +146,7 @@ the configuration file and configure keystone_dest
 and keystone_dest_credentials. Then to start
 the process simply :
 
-    $ swsync --config etc/config.ini
+    $ swsync etc/config.ini
 
 As mention above the sync process won't
 replicate origin keystone accounts to the destination 
