@@ -57,14 +57,14 @@ class Accounts(object):
         tenant_list_file is defined in the config file or given as a command
         line argument.
 
-        If the file is not defined, returns None.
+        If tenant_list_file is not defined, returns None (an empty filter).
         """
         try:
             tenant_filter_filename = get_config('sync', 'tenant_filter_file')
 
             with open(tenant_filter_filename) as tenantsfile:
                 return {name.strip() for name in tenantsfile.readlines()}
-        except (ConfigurationError, IOError):
+        except ConfigurationError:
             return None
 
 
