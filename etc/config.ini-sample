@@ -21,3 +21,9 @@ filler_keystone_client_concurrency = 5
 filler_swift_client_concurrency = 10
 # This is usually bound to the max open files.
 sync_swift_client_concurrency = 10
+
+[sync]
+# This fields holds the path the a file containing the list of tenant ids to
+# migrate. If this field is left blank or commented out, swsync will migrate all
+# the tenants.
+tenant_filter_file =
