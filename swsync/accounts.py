@@ -24,7 +24,8 @@ import keystoneclient.v2_0.client
 import swiftclient
 
 import swsync.containers
-from utils import get_config, ConfigurationError
+from utils import ConfigurationError
+from utils import get_config
 
 
 class Accounts(object):
@@ -66,7 +67,6 @@ class Accounts(object):
                 return {name.strip() for name in tenantsfile.readlines()}
         except ConfigurationError:
             return None
-
 
     def account_headers_clean(self, account_headers, to_null=False):
         ret = {}
