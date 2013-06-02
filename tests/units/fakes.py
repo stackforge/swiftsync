@@ -19,6 +19,8 @@ import random
 import urlparse
 import uuid
 
+from swsync.utils import ConfigurationError
+
 STORAGE_ORIG = 'http://storage-orig.com'
 STORAGE_DEST = 'http://storage-dest.com'
 
@@ -67,7 +69,10 @@ CONFIGDICT = {'auth':
 
 
 def fake_get_config(section, option):
-    return CONFIGDICT[section][option]
+    try:
+        return CONFIGDICT[section][option]
+    except KeyError:
+        raise ConfigurationError
 
 
 class FakeSWConnection(object):
