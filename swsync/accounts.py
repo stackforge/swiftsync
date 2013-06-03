@@ -181,7 +181,7 @@ class Accounts(object):
         _targets_filters = self.get_target_tenant_filter()
         if _targets_filters is not None:
             _targets = (tenant for tenant in self.keystone_cnx.tenants.list()
-                        if tenant.id in _targets)
+                        if tenant.tenant_name in _targets_filters)
         else:
             _targets = self.keystone_cnx.tenants.list()
 
