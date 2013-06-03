@@ -75,6 +75,10 @@ def fake_get_config(section, option):
         raise ConfigurationError
 
 
+def fake_get_filter(self):
+    return {'foo1', 'foo2', 'foo3'}
+
+
 class FakeSWConnection(object):
     def __init__(self, *args, **kwargs):
         self.mainargs = args
