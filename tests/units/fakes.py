@@ -130,6 +130,7 @@ def fake_get_auth(auth_url, tenant, user, password):
 class FakeKSTenant(object):
     def __init__(self, tenant_name):
         self.tenant_name = tenant_name
+        self.name = tenant_name
 
     @property
     def id(self):
