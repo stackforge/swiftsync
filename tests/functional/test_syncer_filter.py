@@ -21,8 +21,8 @@
 # to synchronize the destination swift must own the ResellerAdmin role in
 # keystone.
 #
-# You must also create a file containing the list of users to migrate and
-# specify this file in your config.ini file.
+# In your config.ini file, you should uncomment the field tenant_filter_file
+# and specify a path to a file where you're allowed to read and write.
 
 import eventlet
 import random

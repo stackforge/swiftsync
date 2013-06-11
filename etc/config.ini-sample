@@ -23,7 +23,6 @@ filler_swift_client_concurrency = 10
 sync_swift_client_concurrency = 10
 
 [sync]
-# This fields holds the path the a file containing the list of tenant ids to
-# migrate. If this field is left blank or commented out, swsync will migrate all
-# the tenants.
-tenant_filter_file =
+# Uncomment this field to designate a file containing a list of tenant names
+# to be migrated. If left commented, all the tenants will be targeted.
+# tenant_filter_file = etc/tenants.list
