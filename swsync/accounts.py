@@ -24,6 +24,7 @@ import keystoneclient.v2_0.client
 import swiftclient
 
 import swsync.containers
+from utils import ConfigurationError
 from utils import get_config
 
 
@@ -51,6 +52,21 @@ class Accounts(object):
                                                  username=username,
                                                  password=password,
                                                  tenant_name=tenant_name)
+
+    def get_target_tenant_filter(self):
+        """Returns a set of target tenants from the tenant_list_file.
+        tenant_list_file is defined in the config file or given as a command
+        line argument.
+
+        If tenant_list_file is not defined, returns None (an empty filter).
+        """
+        try:
+            tenant_filter_filename = get_config('sync', 'tenant_filter_file')
+
+            with open(tenant_filter_filename) as tenantsfile:
+                return {name.strip() for name in tenantsfile.readlines()}
+        except ConfigurationError:
+            return None
 
     def account_headers_clean(self, account_headers, to_null=False):
         ret = {}
@@ -160,7 +176,16 @@ class Accounts(object):
 
         self.keystone_cnx = self.get_ks_auth_orig()
 
-        for tenant in self.keystone_cnx.tenants.list():
+        # if user has defined target tenants, limit the migration
+        # to them
+        _targets_filters = self.get_target_tenant_filter()
+        if _targets_filters is not None:
+            _targets = (tenant for tenant in self.keystone_cnx.tenants.list()
+                        if tenant.name in _targets_filters)
+        else:
+            _targets = self.keystone_cnx.tenants.list()
+
+        for tenant in _targets:
             user_orig_st_url = bare_oa_st_url + tenant.id
             user_dst_st_url = bare_dst_st_url + tenant.id
 

@@ -19,6 +19,8 @@ import random
 import urlparse
 import uuid
 
+from swsync.utils import ConfigurationError
+
 STORAGE_ORIG = 'http://storage-orig.com'
 STORAGE_DEST = 'http://storage-dest.com'
 
@@ -67,7 +69,14 @@ CONFIGDICT = {'auth':
 
 
 def fake_get_config(section, option):
-    return CONFIGDICT[section][option]
+    try:
+        return CONFIGDICT[section][option]
+    except KeyError:
+        raise ConfigurationError
+
+
+def fake_get_filter(self):
+    return {'foo1', 'foo2', 'foo3'}
 
 
 class FakeSWConnection(object):
@@ -121,6 +130,7 @@ def fake_get_auth(auth_url, tenant, user, password):
 class FakeKSTenant(object):
     def __init__(self, tenant_name):
         self.tenant_name = tenant_name
+        self.name = tenant_name
 
     @property
     def id(self):

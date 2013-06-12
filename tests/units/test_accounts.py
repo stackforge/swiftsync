@@ -35,6 +35,8 @@ class TestAccountBase(tests.units.base.TestCase):
         self.stubs.Set(swiftclient.client, 'Connection',
                        fakes.FakeSWConnection)
         self.stubs.Set(swsync.accounts, 'get_config', fakes.fake_get_config)
+        self.stubs.Set(swsync.accounts.Accounts, 'get_target_tenant_filter',
+                       fakes.fake_get_filter)
         self.stubs.Set(swiftclient, 'http_connection',
                        fakes.FakeSWClient.http_connection)
 

@@ -21,3 +21,8 @@ filler_keystone_client_concurrency = 5
 filler_swift_client_concurrency = 10
 # This is usually bound to the max open files.
 sync_swift_client_concurrency = 10
+
+[sync]
+# Uncomment this field to designate a file containing a list of tenant names
+# to be migrated. If left commented, all the tenants will be targeted.
+# tenant_filter_file = etc/tenants.list

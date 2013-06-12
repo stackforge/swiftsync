@@ -162,6 +162,14 @@ first pass goes well, if for example there is network failure swsync will
 just skip it and hope to do it on the next run. So the tool can for instance
 be launched by a cron job to perform diff synchronization each night.
 
+Tenant Filter File
+------------------
+
+It is possible to limit the migration to a subset of the total number of
+tenants, by uncommenting the field "tenant_filter_file". This field should
+hold the path to a file containing a list of tenant names to migrate, one
+per line. If left commented, swsync will migrate all the tenants.
+
 Swift Middleware last-modified
 ------------------------------
 
