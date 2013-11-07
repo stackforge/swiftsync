@@ -86,6 +86,10 @@ def create_swift_user(client, account_name, account_id, user_amount):
         # Get swift_operator_role id
         roleid = [role.id for role in client.roles.list()
                   if role.name == get_config('filler', 'swift_operator_role')]
+        if not roleid:
+            logging.error('Could not find swift_operator_role %s in keystone' %
+                            get_config('filler', 'swift_operator_role'))
+            sys.exit(1)
         roleid = roleid[0]
         # Add tenant/user in swift operator role/group
         client.roles.add_user_role(uid.id, roleid, account_id)
