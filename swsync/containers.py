@@ -96,7 +96,11 @@ class Containers(object):
             container_headers = orig_container_headers.copy()
             for h in ('x-container-object-count', 'x-trans-id',
                       'x-container-bytes-used'):
-                del container_headers[h]
+                try:
+                    del container_headers[h]
+                except KeyError:
+                    # Nov2013: swift server does not set x-trans-id header
+                    pass
             p = dest_storage_cnx[0]
             url = "%s://%s%s" % (p.scheme, p.netloc, p.path)
             try:

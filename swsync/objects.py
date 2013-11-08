@@ -19,7 +19,12 @@ import logging
 import eventlet
 import swift.common.bufferedhttp
 import swift.common.http
-import swift.container.sync
+try:
+    from swift.container.sync import _Iter2FileLikeObject as FileLikeIter
+except ImportError:
+    # Nov2013: swift.common.utils now include a more generic object
+    from swift.common.utils import FileLikeIter
+
 from swiftclient import client as swiftclient
 import urllib
 import urllib2
@@ -93,7 +98,7 @@ def delete_object(dest_cnx,
                               http_conn=dest_cnx,
                               name=object_name)
 
-
+import swift.common.utils
 def sync_object(orig_storage_url, orig_token, dest_storage_url,
                 dest_token, container_name, object_name_etag):
     object_name = object_name_etag[1]
@@ -107,11 +112,10 @@ def sync_object(orig_storage_url, orig_token, dest_storage_url,
     post_headers = orig_headers
     post_headers['x-auth-token'] = dest_token
     sync_to = dest_storage_url + "/" + container_name
-    iterlike = swift.container.sync._Iter2FileLikeObject
     try:
         swiftclient.put_object(sync_to, name=object_name,
                                headers=post_headers,
-                               contents=iterlike(orig_body))
+                               contents=FileLikeIter(orig_body))
     except(swiftclient.ClientException), e:
         logging.info("error sync object: %s, %s" % (
                      object_name, e.http_reason))

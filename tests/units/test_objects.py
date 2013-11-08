@@ -16,6 +16,12 @@
 # under the License.
 import eventlet
 import swift
+try:
+    from swift.container.sync import _Iter2FileLikeObject as FileLikeIter
+except ImportError:
+    # Nov2013: swift.common.utils now include a more generic object
+    from swift.common.utils import FileLikeIter
+
 import swiftclient
 
 import swsync.objects as swobjects
@@ -86,8 +92,7 @@ class TestObject(test_base.TestCase):
         def put_object(url, name=None, headers=None, contents=None):
             self.assertEqual('obj1', name)
             self.assertIn('x-auth-token', headers)
-            self.assertIsInstance(contents,
-                                  swift.container.sync._Iter2FileLikeObject)
+            self.assertIsInstance(contents, FileLikeIter)
             contents_read = contents.read()
             self.assertEqual(len(contents_read), len(body))
 
