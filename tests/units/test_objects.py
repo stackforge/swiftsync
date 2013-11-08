@@ -158,7 +158,7 @@ class TestObject(test_base.TestCase):
                                             "cont1",
                                             "obj1")
         self.assertIn('x-foo', headers)
-        self.assertEquals(headers['x-foo'], 'BaR')
+        self.assertEqual(headers['x-foo'], 'BaR')
 
     def test_get_object_over_conn_timeout(self):
         new_connect = fake_http_connect(200, connect_waitfor=2)

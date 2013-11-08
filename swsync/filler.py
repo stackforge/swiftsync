@@ -239,7 +239,7 @@ def create_containers(cnx, acc, c_amount, index_containers=None):
         try:
             cnx.put_container(container_name, headers=copy.copy(meta))
             containers_d[container_name] = {'meta': meta, 'objects': []}
-        except ClientException, e:
+        except(ClientException), e:
             logging.warning("Unable to create container %s due to %s" %
                             (container_name.encode('ascii', 'ignore'),
                              e))

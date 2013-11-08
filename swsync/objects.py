@@ -98,7 +98,7 @@ def delete_object(dest_cnx,
                               http_conn=dest_cnx,
                               name=object_name)
 
-import swift.common.utils
+
 def sync_object(orig_storage_url, orig_token, dest_storage_url,
                 dest_token, container_name, object_name_etag):
     object_name = object_name_etag[1]

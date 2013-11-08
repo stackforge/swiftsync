@@ -101,8 +101,8 @@ class TestAccountSyncMetadata(TestAccountBase):
                                  post_account_called=post_account_called,
                                  get_account_called=get_account_called)
 
-        self.assertEquals(len(sync_container_called), 1)
-        self.assertEquals(len(get_account_called), 2)
+        self.assertEqual(len(sync_container_called), 1)
+        self.assertEqual(len(get_account_called), 2)
         self.assertTrue(info_called)
 
         self.assertIn('x-account-meta-life',
@@ -134,8 +134,8 @@ class TestAccountSyncMetadata(TestAccountBase):
                                  post_account_called=post_account_called,
                                  get_account_called=get_account_called)
 
-        self.assertEquals(len(sync_container_called), 1)
-        self.assertEquals(len(get_account_called), 2)
+        self.assertEqual(len(sync_container_called), 1)
+        self.assertEqual(len(get_account_called), 2)
         self.assertTrue(info_called)
 
         self.assertIn('x-account-meta-life',
@@ -167,8 +167,8 @@ class TestAccountSyncMetadata(TestAccountBase):
                                  post_account_called=post_account_called,
                                  get_account_called=get_account_called)
 
-        self.assertEquals(len(sync_container_called), 1)
-        self.assertEquals(len(get_account_called), 2)
+        self.assertEqual(len(sync_container_called), 1)
+        self.assertEqual(len(get_account_called), 2)
         self.assertTrue(info_called)
 
         self.assertIn('x-account-meta-life',
@@ -212,7 +212,7 @@ class TestAccountSync(TestAccountBase):
         ret = self.accounts_cls.get_swift_auth(
             "http://test.com", tenant_name, "user", "password")
         tenant_id = fakes.TENANTS_LIST[tenant_name]['id']
-        self.assertEquals(ret[0], "%s/v1/AUTH_%s" % (fakes.STORAGE_DEST,
+        self.assertEqual(ret[0], "%s/v1/AUTH_%s" % (fakes.STORAGE_DEST,
                                                      tenant_id))
 
     def test_get_ks_auth_orig(self):
@@ -220,11 +220,11 @@ class TestAccountSync(TestAccountBase):
         k = fakes.CONFIGDICT['auth']['keystone_origin_admin_credentials']
         tenant_name, username, password = k.split(':')
 
-        self.assertEquals(kwargs['tenant_name'], tenant_name)
-        self.assertEquals(kwargs['username'], username)
-        self.assertEquals(kwargs['password'], password)
+        self.assertEqual(kwargs['tenant_name'], tenant_name)
+        self.assertEqual(kwargs['username'], username)
+        self.assertEqual(kwargs['password'], password)
         k = fakes.CONFIGDICT['auth']['keystone_origin']
-        self.assertEquals(k, kwargs['auth_url'])
+        self.assertEqual(k, kwargs['auth_url'])
 
     def test_process(self):
         ret = []
@@ -240,7 +240,7 @@ class TestAccountSync(TestAccountBase):
                                  for x in fakes.TENANTS_LIST)
         ret_orig_storage_id = sorted(
             x[0][x[0].find('AUTH_') + 5:] for x in ret)
-        self.assertEquals(tenant_list_ids, ret_orig_storage_id)
+        self.assertEqual(tenant_list_ids, ret_orig_storage_id)
         [self.assertTrue(y[1].startswith(fakes.STORAGE_DEST)) for y in ret]
 
     def test_sync_account(self):
@@ -270,7 +270,7 @@ class TestAccountSync(TestAccountBase):
         ret_container_list = sorted(x[7] for x in ret)
         default_container_list = sorted(x[0]['name']
                                         for x in fakes.CONTAINERS_LIST)
-        self.assertEquals(ret_container_list, default_container_list)
+        self.assertEqual(ret_container_list, default_container_list)
 
     def test_sync_exception_get_account(self):
         called = []
