@@ -53,9 +53,10 @@ def main():
     if args.config and os.path.isfile(args.config):
         try:
             conf = utils.parse_ini(args.config)
+        except Exception, exc:
             logging.info('Unable to parse provided conf file')
-        except Exception:
-            pass
+            logging.error(exc)
+            sys.exit(1)
     else:
         try:
             conf = utils.parse_ini()

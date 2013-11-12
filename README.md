@@ -49,7 +49,12 @@ setup.py install.
 
     $ virtualenv $HOME/venv
     $ . $HOME/venv/bin/activate
+    $ pip install -r tools/pip-requires
     $ python setup.py install
+
+Note, without the manual pip install, the installation might failed with
+this error: 'TypeError: dist must be a Distribution instance'
+ref: https://bugs.launchpad.net/swift/+bug/1217288
 
 swfiller usage
 --------------

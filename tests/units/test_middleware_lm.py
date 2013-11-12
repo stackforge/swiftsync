@@ -53,11 +53,11 @@ class TestLastModifiedMiddleware(unittest.TestCase):
     def test_denied_method_conf(self):
         app = FakeApp()
         test = middleware.filter_factory({})(app)
-        self.assertEquals(test.key_name, 'Last-Modified')
+        self.assertEqual(test.key_name, 'Last-Modified')
         test = middleware.filter_factory({'key_name': "Last Modified"})(app)
-        self.assertEquals(test.key_name, 'Last-Modified')
+        self.assertEqual(test.key_name, 'Last-Modified')
         test = middleware.filter_factory({'key_name': "Custom Key"})(app)
-        self.assertEquals(test.key_name, 'Custom-Key')
+        self.assertEqual(test.key_name, 'Custom-Key')
 
     def test_PUT_on_container(self):
         self.called = False

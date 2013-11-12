@@ -104,8 +104,8 @@ class TestContainersSyncMetadata(TestContainersBase):
                                  post_called, info_called)
         self.assertEqual(len(get_called), 2)
         self.assertEqual(len(post_called), 1)
-        self.assertEquals(post_called[0]['x-container-meta-psg'], '')
-        self.assertEquals(post_called[0]['x-container-meta-om'], 'enkl')
+        self.assertEqual(post_called[0]['x-container-meta-psg'], '')
+        self.assertEqual(post_called[0]['x-container-meta-om'], 'enkl')
         self.assertIn('HEADER: sync headers: cont1', info_called)
 
     def test_sync_containers_metada_added_on_orig(self):
@@ -130,7 +130,7 @@ class TestContainersSyncMetadata(TestContainersBase):
         self.assertIn('HEADER: sync headers: cont1', info_called)
         self.assertEqual(len(get_called), 2)
         self.assertEqual(len(post_called), 1)
-        self.assertEquals(post_called[0]['x-container-meta-om'], 'enkl')
+        self.assertEqual(post_called[0]['x-container-meta-om'], 'enkl')
 
     def test_sync_containers_metada_changed(self):
         get_called = []
@@ -153,7 +153,7 @@ class TestContainersSyncMetadata(TestContainersBase):
                                  post_called, info_called)
         self.assertEqual(len(get_called), 2)
         self.assertEqual(len(post_called), 1)
-        self.assertEquals(post_called[0]['x-container-meta-psg'], 'magic')
+        self.assertEqual(post_called[0]['x-container-meta-psg'], 'magic')
         self.assertIn('HEADER: sync headers: cont1', info_called)
 
     def test_sync_containers_metadata_raise_client(self):
