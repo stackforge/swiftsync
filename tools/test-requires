@@ -4,7 +4,6 @@ distribute>=0.6.24
 mox
 nose
 nosehtmloutput
-openstack.nose_plugin
 testrepository>=0.0.13
 testtools>=0.9.22
 unittest2
