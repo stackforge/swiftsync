@@ -209,7 +209,6 @@ class TestSyncer(unittest.TestCase):
         """create two empty accounts, Sync only one
         """
         index = {}
-        test_account_name = "account_test"
 
         # create account
         self.created = filler.create_swift_account(self.o_ks_client,

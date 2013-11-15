@@ -213,7 +213,7 @@ class TestAccountSync(TestAccountBase):
             "http://test.com", tenant_name, "user", "password")
         tenant_id = fakes.TENANTS_LIST[tenant_name]['id']
         self.assertEqual(ret[0], "%s/v1/AUTH_%s" % (fakes.STORAGE_DEST,
-                                                     tenant_id))
+                                                    tenant_id))
 
     def test_get_ks_auth_orig(self):
         _, kwargs = self.accounts_cls.get_ks_auth_orig()()
