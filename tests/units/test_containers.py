@@ -179,6 +179,24 @@ class TestContainersSyncMetadata(TestContainersBase):
         self.assertIn('ERROR: updating container metadata: cont1, ',
                       info_called)
 
+    def test_sync_containers_last_modified(self):
+        get_called = []
+        post_called = []
+        info_called = []
+
+        orig_dict = ({'x-container-bytes-used': '100',
+                      'x-container-object-count': '2',
+                      'x-container-meta-last-modified': '1'},
+                     [{'last_modified': '2010', 'name': 'foo'}])
+        dest_dict = ({'x-container-bytes-used': '200',
+                      'x-container-object-count': '2',
+                      'x-container-meta-last-modified': '2'},
+                     [{'last_modified': '2010', 'name': 'foo'}])
+        self._base_sync_metadata(orig_dict, dest_dict,
+                                 get_called, post_called,
+                                 info_called, raise_post_container=True)
+        self.assertIn('Dest is up-to-date', info_called)
+
 
 class TestContainers(TestContainersBase):
     def test_sync_when_container_nothere(self):

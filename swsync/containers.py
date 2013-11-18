@@ -121,6 +121,19 @@ class Containers(object):
                 container_name, e.http_reason))
             return
 
+        try:
+            header_key = 'x-container-meta-last-modified'
+            orig_ts = float(orig_container_headers[header_key])
+            dest_ts = float(dest_container_headers[header_key])
+            if orig_ts < dest_ts:
+                logging.info("Dest is up-to-date")
+                return
+        except(KeyError):
+            # last-modified swift middleware is not active
+            pass
+        except(ValueError):
+            logger.error("Could not decode last-modified header!")
+
         do_headers = False
         if len(dest_container_headers) != len(orig_container_headers):
             do_headers = True
