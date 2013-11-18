@@ -600,6 +600,62 @@ class TestSyncer(unittest.TestCase):
                     # Verify content
                     self.assertEqual(objd_o[1], objd_d[1])
 
+    def test_08_sync_containers_with_last_modified(self):
+        """Containers with last-modified middleware
+        """
+        index = {}
+        index_container = {}
+        # Create account
+        self.created = filler.create_swift_account(self.o_ks_client,
+                                                   self.pile,
+                                                   1, 1, index)
+
+        # Create container and store new account && container
+        account_dest, container_dest = None, None
+        for account, account_id, username in \
+                self.extract_created_a_u_iter(self.created):
+            tenant_cnx = sclient.Connection(self.o_st,
+                                            "%s:%s" % (account, username),
+                                            self.default_user_password,
+                                            auth_version=2)
+            acc = (account, account_id)
+            filler.create_containers(tenant_cnx, acc, 1, index_container)
+            filler.create_objects(tenant_cnx, acc, 1, 2048, index_container)
+            cld = self.list_containers(account_id,
+                                       self.d_admin_token, 'orig')
+            account_dest = account_id
+            container_dest = cld[0]['name']
+            break
+
+        # Start sync process
+        self.swsync.process()
+
+        # Update dest
+        self.put_object(account_dest, self.d_admin_token, 'dest',
+                        container_dest, 'lm-test', 'lm-data')
+
+        # Get timestamp
+        cdd = self.get_container_detail(account_dest, self.d_admin_token,
+                                        'dest', container_dest)
+        try:
+            dest_lm = cdd[0]['x-container-meta-last-modified']
+        except(KeyError):
+            # Last-modified middleware is not present
+            return
+
+        # Restart sync process
+        self.swsync.process()
+
+        # Check if dest timestamp have not been updated
+        cdd = self.get_container_detail(account_dest, self.d_admin_token,
+                                        'dest', container_dest)
+        self.assertEqual(dest_lm, cdd[0]['x-container-meta-last-modified'])
+
+        # Check if new object is still present in dest
+        obj_detail = self.get_object_detail(account_dest, self.d_admin_token,
+                                            'dest', container_dest, 'lm-test')
+        self.assertEqual('lm-data', obj_detail[1])
+
     def tearDown(self):
         if self.created:
             for k, v in self.created.items():

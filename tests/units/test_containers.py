@@ -49,10 +49,14 @@ class TestContainersSyncMetadata(TestContainersBase):
                             get_called=[],
                             post_called=[],
                             info_called=[],
+                            error_called=[],
                             raise_post_container=False):
 
         def fake_info(msg):
             info_called.append(msg)
+
+        def fake_error(msg):
+            error_called.append(msg)
 
         def get_container(*args, **kwargs):
             if len(get_called) == 0:
@@ -75,6 +79,7 @@ class TestContainersSyncMetadata(TestContainersBase):
 
         self.stubs.Set(swiftclient, 'head_container', head_container)
         self.stubs.Set(logging, 'info', fake_info)
+        self.stubs.Set(logging, 'error', fake_error)
 
         self.container_cls.sync(self.orig_storage_cnx,
                                 self.orig_storage_url,
@@ -178,6 +183,43 @@ class TestContainersSyncMetadata(TestContainersBase):
                                  info_called, raise_post_container=True)
         self.assertIn('ERROR: updating container metadata: cont1, ',
                       info_called)
+
+    def test_sync_containers_last_modified(self):
+        get_called = []
+        post_called = []
+        info_called = []
+
+        orig_dict = ({'x-container-bytes-used': '100',
+                      'x-container-object-count': '2',
+                      'x-container-meta-last-modified': '1'},
+                     [{'last_modified': '2010', 'name': 'foo'}])
+        dest_dict = ({'x-container-bytes-used': '200',
+                      'x-container-object-count': '2',
+                      'x-container-meta-last-modified': '2'},
+                     [{'last_modified': '2010', 'name': 'foo'}])
+        self._base_sync_metadata(orig_dict, dest_dict,
+                                 get_called, post_called,
+                                 info_called, raise_post_container=True)
+        self.assertIn('Dest is up-to-date', info_called)
+
+    def test_sync_containers_last_modified_errors(self):
+        get_called = []
+        post_called = []
+        error_called = []
+
+        orig_dict = ({'x-container-bytes-used': '100',
+                      'x-container-object-count': '2',
+                      'x-container-meta-last-modified': 'foo42'},
+                     [{'last_modified': '2010', 'name': 'foo'}])
+        dest_dict = ({'x-container-bytes-used': '200',
+                      'x-container-object-count': '2',
+                      'x-container-meta-last-modified': 'foo43'},
+                     [{'last_modified': '2010', 'name': 'foo'}])
+        self._base_sync_metadata(orig_dict, dest_dict,
+                                 get_called, post_called,
+                                 error_called=error_called,
+                                 raise_post_container=True)
+        self.assertIn('Could not decode last-modified header!', error_called)
 
 
 class TestContainers(TestContainersBase):
