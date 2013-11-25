@@ -1,0 +1,9 @@
+Verified+2: Jenkins
+Approved+1: Chmouel Boudjnah <chmouel@enovance.com>
+Code-Review+2: Chmouel Boudjnah <chmouel@enovance.com>
+Code-Review+2: Joe Hakim Rahme <joe.hakim.rahme@enovance.com>
+Submitted-by: Jenkins
+Submitted-at: Mon, 25 Nov 2013 16:03:08 +0000
+Reviewed-on: https://review.openstack.org/56948
+Project: stackforge/swiftsync
+Branch: refs/heads/master
