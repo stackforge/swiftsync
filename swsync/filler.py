@@ -137,10 +137,10 @@ def create_swift_account(client, pile,
 def delete_account_content(acc, user):
     cnx = swift_cnx(acc, user[0])
     account_infos = cnx.get_account(full_listing=True)
-    # Retreive container list
+    # Retrieve container list
     container_l = account_infos[1]
     containers_name = [ci['name'] for ci in container_l]
-    # Retreive object list
+    # Retrieve object list
     for container in containers_name:
         container_infos = cnx.get_container(container)
         object_names = [obj_detail['name'] for obj_detail
