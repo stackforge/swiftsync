@@ -196,3 +196,16 @@ swfiller and swsync are not designed to work with swift v1.0 authentication.
 We experienced some performances troubles when doing large synchronization
 with token validation. Having to validate the token each time could come back with
 error due to keystone capability to handle large amount of token validation requests.
+
+
+Reporting a bug
+---------------
+
+The issue tracker is managed by launchpad so please use the
+following link to report a bug :
+
+https://bugs.launchpad.net/swiftsync
+
+If you want to submit a patch please use https://review.openstack.org.
+If you are not familiar with the Openstack way of submitting patches
+please read before https://wiki.openstack.org/wiki/How_To_Contribute.
