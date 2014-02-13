@@ -45,6 +45,7 @@ class Containers(object):
             try:
                 dest_container_stats, dest_objects = swiftclient.get_container(
                     None, dest_token, container, http_conn=dest_storage_cnx,
+                    full_listing=True,
                 )
             except(swiftclient.client.ClientException), e:
                 logging.info("error getting container: %s, %s" % (
@@ -81,6 +82,7 @@ class Containers(object):
         try:
             orig_container_headers, orig_objects = swiftclient.get_container(
                 None, orig_token, container_name, http_conn=orig_storage_cnx,
+                full_listing=True,
             )
         except(swiftclient.client.ClientException), e:
             logging.info("ERROR: getting container: %s, %s" % (
@@ -115,6 +117,7 @@ class Containers(object):
         try:
             dest_container_headers, dest_objects = swiftclient.get_container(
                 None, dest_token, container_name, http_conn=dest_storage_cnx,
+                full_listing=True,
             )
         except(swiftclient.client.ClientException), e:
             logging.info("ERROR: creating container: %s, %s" % (
