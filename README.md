@@ -208,4 +208,4 @@ https://bugs.launchpad.net/swiftsync
 
 If you want to submit a patch please use https://review.openstack.org.
 If you are not familiar with the Openstack way of submitting patches
-please read before https://wiki.openstack.org/wiki/How_To_Contribute.
+please read before http://docs.openstack.org/infra/manual/developers.html.
