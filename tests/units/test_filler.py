@@ -16,19 +16,16 @@
 # under the License.
 
 import eventlet
-import swiftclient
-
-from keystoneclient.exceptions import ClientException as KSClientException
-
 from fakes import FakeKSClient
 from fakes import FakeKSTenant
 from fakes import FakeKSUser
 from fakes import FakeSWConnection
-
-from tests.units import base
+from keystoneclient.exceptions import ClientException as KSClientException
+import swiftclient
 
 from swsync import filler
 from swsync import utils
+from tests.units import base
 
 
 class TestFiller(base.TestCase):
