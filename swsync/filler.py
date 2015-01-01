@@ -26,26 +26,23 @@
 # of objects/containers store in swift for each account then delete
 # accounts.
 
-import os
-import sys
-
 import copy
 import logging
+import os
 import pickle
 import random
 import string
 import StringIO
+import sys
 
+import eventlet
+from keystoneclient.exceptions import ClientException as KSClientException
 from swiftclient import client as sclient
 from swiftclient.client import ClientException
 
-from keystoneclient.exceptions import ClientException as KSClientException
-
-import eventlet
+from swsync.utils import get_config
 
 sys.path.append("../")
-from utils import get_config
-
 eventlet.patcher.monkey_patch()
 
 # Some unicode codepoint
@@ -66,8 +63,8 @@ def customize(bstr, mdl):
     elif mdl == 1:
         return bstr + " s"
     elif mdl == 2:
-        return unicode(bstr, 'utf8') + u'_' + u"".\
-            join([random.choice(ucodes) for i in range(3)])
+        return (unicode(bstr, 'utf8') + u'_' +
+            u"".join([random.choice(ucodes) for i in range(3)]))
     else:
         return bstr
 
@@ -147,8 +144,7 @@ def delete_account_content(acc, user):
                         in container_infos[1]]
         # Delete objects
         for obj in object_names:
-            logging.info("\
-                    Deleting object %s in container %s for account %s" %
+            logging.info("Deleting object %s in container %s for account %s" %
                         (obj, container, str(acc)))
             cnx.delete_object(container, obj)
 
@@ -251,7 +247,7 @@ def create_account_meta(cnx):
     for i in range(3):
         # python-swiftclient does not quote correctly meta ... need
         # to investigate why it does not work when key are utf8
-        #meta_keys.extend([customize(m, (i + 1) % 3) for m in
+        # meta_keys.extend([customize(m, (i + 1) % 3) for m in
         #             map(get_rand_str, ('X-Account-Meta-',) * 1)])
         meta_keys.extend(map(get_rand_str, ('X-Account-Meta-',) * 3))
         meta_values.extend([customize(m, (i + 1) % 3) for m in
@@ -266,7 +262,7 @@ def fill_swift(pool, created_account, c_amount,
                         o_amount, fmax, index_containers):
         cnx = swift_cnx(acc, users[0][0])
         # Use the first user we find for fill in the swift account
-        #TODO(fbo) must keep track of the account meta
+        # TODO(fbo) must keep track of the account meta
         create_account_meta(cnx)
         create_containers(cnx, acc, c_amount, index_containers)
         create_objects(cnx, acc, o_amount, fmax, index_containers)
