@@ -24,11 +24,12 @@
 # to synchronize the destination swift must own the ResellerAdmin role in
 # keystone.
 
-import eventlet
 import unittest
 
+import eventlet
 from keystoneclient.v2_0 import client as ksclient
 from swiftclient import client as sclient
+
 from swsync import accounts
 from swsync import filler
 from swsync.utils import get_config
@@ -63,19 +64,19 @@ class TestSyncer(unittest.TestCase):
             password=self.o_admin_password,
             tenant_name=self.o_admin_tenant)
         # Retreive admin (ResellerAdmin) token
-        (self.o_admin_auth_url, self.o_admin_token) = \
+        (self.o_admin_auth_url, self.o_admin_token) = (
             sclient.Connection(self.o_st,
                                "%s:%s" % (self.o_admin_tenant,
                                           self.o_admin_user),
                                self.o_admin_password,
-                               auth_version=2).get_auth()
+                               auth_version=2).get_auth())
         # Retreive admin (ResellerAdmin) token
-        (self.d_admin_auth_url, self.d_admin_token) = \
+        (self.d_admin_auth_url, self.d_admin_token) = (
             sclient.Connection(self.d_st,
                                "%s:%s" % (self.o_admin_tenant,
                                           self.o_admin_user),
                                self.o_admin_password,
-                               auth_version=2).get_auth()
+                               auth_version=2).get_auth())
         # Instanciate syncer
         self.swsync = accounts.Accounts()
 
@@ -88,10 +89,10 @@ class TestSyncer(unittest.TestCase):
             yield account, account_id, username
 
     def create_st_account_url(self, account_id):
-        o_account_url = \
-            self.o_admin_auth_url.split('AUTH_')[0] + 'AUTH_' + account_id
-        d_account_url = \
-            self.d_admin_auth_url.split('AUTH_')[0] + 'AUTH_' + account_id
+        o_account_url = (
+            self.o_admin_auth_url.split('AUTH_')[0] + 'AUTH_' + account_id)
+        d_account_url = (
+            self.d_admin_auth_url.split('AUTH_')[0] + 'AUTH_' + account_id)
         return o_account_url, d_account_url
 
     def verify_aco_diff(self, alo, ald):
@@ -203,16 +204,15 @@ class TestSyncer(unittest.TestCase):
                               http_conn=cnx)
 
     def test_01_sync_one_empty_account(self):
-        """one empty account with meta data
-        """
+        """One empty account with meta data."""
         index = {}
         # create account
         self.created = filler.create_swift_account(self.o_ks_client,
                                                    self.pile,
                                                    1, 1, index)
 
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             # post meta data on account
             tenant_cnx = sclient.Connection(self.o_st,
                                             "%s:%s" % (account, username),
@@ -224,8 +224,8 @@ class TestSyncer(unittest.TestCase):
         self.swsync.process()
 
         # Now verify dest
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             alo = self.get_account_detail(account_id,
                                           self.o_admin_token, 'orig')
             ald = self.get_account_detail(account_id,
@@ -233,16 +233,15 @@ class TestSyncer(unittest.TestCase):
             self.verify_aco_diff(alo, ald)
 
     def test_02_sync_many_empty_account(self):
-        """Many empty account with meta data
-        """
+        """Many empty account with meta data."""
         index = {}
         # Create account
         self.created = filler.create_swift_account(self.o_ks_client,
                                                    self.pile,
                                                    3, 1, index)
 
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             # Post meta data on account
             tenant_cnx = sclient.Connection(self.o_st,
                                             "%s:%s" % (account, username),
@@ -254,8 +253,8 @@ class TestSyncer(unittest.TestCase):
         self.swsync.process()
 
         # Now verify dest
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             alo = self.get_account_detail(account_id,
                                           self.o_admin_token, 'orig')
             ald = self.get_account_detail(account_id,
@@ -263,8 +262,7 @@ class TestSyncer(unittest.TestCase):
             self.verify_aco_diff(alo, ald)
 
     def test_03_sync_many_accounts_with_many_containers_meta(self):
-        """Many accounts with many containers and container meta data
-        """
+        """Many accounts with many containers and container meta data."""
         index = {}
         index_container = {}
         # Create account
@@ -272,8 +270,8 @@ class TestSyncer(unittest.TestCase):
                                                    self.pile,
                                                    3, 1, index)
 
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             tenant_cnx = sclient.Connection(self.o_st,
                                             "%s:%s" % (account, username),
                                             self.default_user_password,
@@ -285,8 +283,8 @@ class TestSyncer(unittest.TestCase):
         self.swsync.process()
 
         # Now verify dest
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             # Verify container listing
             clo = self.list_containers(account_id,
                                        self.o_admin_token, 'orig')
@@ -307,8 +305,7 @@ class TestSyncer(unittest.TestCase):
             self.verify_aco_diff(cdo, cdd)
 
     def test_04_sync_many_accounts_many_containers_and_obj_meta(self):
-        """Many accounts with many containers and some object
-        """
+        """Many accounts with many containers and some object."""
         index = {}
         index_container = {}
         # Create account
@@ -316,8 +313,8 @@ class TestSyncer(unittest.TestCase):
                                                    self.pile,
                                                    1, 1, index)
 
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             tenant_cnx = sclient.Connection(self.o_st,
                                             "%s:%s" % (account, username),
                                             self.default_user_password,
@@ -330,8 +327,8 @@ class TestSyncer(unittest.TestCase):
         self.swsync.process()
 
         # Now verify dest
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             # Verify container listing
             olo = self.list_objects_in_containers(account_id,
                                                   self.o_admin_token, 'orig')
@@ -363,16 +360,15 @@ class TestSyncer(unittest.TestCase):
                     self.assertEqual(objd_o[1], objd_d[1])
 
     def test_05_account_two_passes(self):
-        """Account modified two sync passes
-        """
+        """Account modified two sync passes."""
         index = {}
         # create account
         self.created = filler.create_swift_account(self.o_ks_client,
                                                    self.pile,
                                                    3, 1, index)
 
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             # post meta data on account
             tenant_cnx = sclient.Connection(self.o_st,
                                             "%s:%s" % (account, username),
@@ -384,8 +380,8 @@ class TestSyncer(unittest.TestCase):
         self.swsync.process()
 
         # Add more meta to account
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             # Modify meta data on account
             tenant_cnx = sclient.Connection(self.o_st,
                                             "%s:%s" % (account, username),
@@ -408,8 +404,8 @@ class TestSyncer(unittest.TestCase):
         self.swsync.process()
 
         # Now verify dest
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             alo = self.get_account_detail(account_id,
                                           self.o_admin_token, 'orig')
             ald = self.get_account_detail(account_id,
@@ -417,8 +413,7 @@ class TestSyncer(unittest.TestCase):
             self.verify_aco_diff(alo, ald)
 
     def test_06_container_two_passes(self):
-        """Containers modified two sync passes
-        """
+        """Containers modified two sync passes."""
         index = {}
         index_container = {}
         # Create account
@@ -426,8 +421,8 @@ class TestSyncer(unittest.TestCase):
                                                    self.pile,
                                                    3, 1, index)
 
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             tenant_cnx = sclient.Connection(self.o_st,
                                             "%s:%s" % (account, username),
                                             self.default_user_password,
@@ -439,8 +434,8 @@ class TestSyncer(unittest.TestCase):
         self.swsync.process()
 
         # Modify container in account
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             tenant_cnx = sclient.Connection(self.o_st,
                                             "%s:%s" % (account, username),
                                             self.default_user_password,
@@ -475,8 +470,8 @@ class TestSyncer(unittest.TestCase):
         self.swsync.process()
 
         # Now verify dest
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             # Verify container listing
             clo = self.list_containers(account_id,
                                        self.o_admin_token, 'orig')
@@ -497,8 +492,7 @@ class TestSyncer(unittest.TestCase):
                 self.verify_aco_diff(cdo, cdd)
 
     def test_07_object_two_passes(self):
-        """Objects modified two passes
-        """
+        """Objects modified two passes."""
         index = {}
         index_container = {}
         # Create account
@@ -506,8 +500,8 @@ class TestSyncer(unittest.TestCase):
                                                    self.pile,
                                                    1, 1, index)
 
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             tenant_cnx = sclient.Connection(self.o_st,
                                             "%s:%s" % (account, username),
                                             self.default_user_password,
@@ -520,8 +514,8 @@ class TestSyncer(unittest.TestCase):
         self.swsync.process()
 
         # Modify objects in containers
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             tenant_cnx = sclient.Connection(self.o_st,
                                             "%s:%s" % (account, username),
                                             self.default_user_password,
@@ -565,8 +559,8 @@ class TestSyncer(unittest.TestCase):
         self.swsync.process()
 
         # Now verify dest
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             # Verify container listing
             olo = self.list_objects_in_containers(account_id,
                                                   self.o_admin_token, 'orig')
@@ -601,8 +595,7 @@ class TestSyncer(unittest.TestCase):
                     self.assertEqual(objd_o[1], objd_d[1])
 
     def test_08_sync_containers_with_last_modified(self):
-        """Containers with last-modified middleware
-        """
+        """Containers with last-modified middleware."""
         index = {}
         index_container = {}
         # Create account
@@ -612,8 +605,8 @@ class TestSyncer(unittest.TestCase):
 
         # Create container and store new account && container
         account_dest, container_dest = None, None
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
             tenant_cnx = sclient.Connection(self.o_st,
                                             "%s:%s" % (account, username),
                                             self.default_user_password,
@@ -661,8 +654,8 @@ class TestSyncer(unittest.TestCase):
             for k, v in self.created.items():
                 user_info_list = [user[1] for user in v]
                 account_id = k[1]
-                o_account_url, d_account_url = \
-                    self.create_st_account_url(account_id)
+                o_account_url, d_account_url = (
+                    self.create_st_account_url(account_id))
                 # Remove account content on origin and destination
                 self.delete_account_cont(o_account_url, self.o_admin_token)
                 self.delete_account_cont(d_account_url, self.d_admin_token)
