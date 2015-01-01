@@ -137,7 +137,11 @@ class Accounts(object):
                 # let's pass it on for the next pass
                 return
 
-        for container in orig_containers:
+        container_list = iter(orig_containers)
+        if swsync.utils.REVERSE:
+            container_list = reversed(orig_containers)
+
+        for container in container_list:
             logging.info("Syncronizing container %s: %s",
                          container['name'], container)
             dt1 = datetime.datetime.fromtimestamp(time.time())
