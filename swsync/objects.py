@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2013 eNovance SAS <licensing@enovance.com>
 #
-# Author: Chmouel Boudjnah <chmouel@enovance.com>
-#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -15,6 +13,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 import logging
+import urllib
+import urllib2
 
 import eventlet
 import swift.common.bufferedhttp
@@ -24,10 +24,7 @@ try:
 except ImportError:
     # Nov2013: swift.common.utils now include a more generic object
     from swift.common.utils import FileLikeIter
-
 from swiftclient import client as swiftclient
-import urllib
-import urllib2
 
 
 def quote(value, safe='/'):

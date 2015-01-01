@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2013 eNovance SAS <licensing@enovance.com>
 #
-# Author: Chmouel Boudjnah <chmouel@enovance.com>
-#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -18,10 +16,10 @@
 """Test base classes imported from ceilometer.
 """
 
-import unittest2
-
 import mox
 import stubout
+import unittest2
+
 from swsync import utils
 
 
