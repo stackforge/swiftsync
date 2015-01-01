@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2013 eNovance SAS <licensing@enovance.com>
 #
-# Author: Fabien Boucher <fabien.boucher@enovance.com>
-#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -16,19 +14,16 @@
 # under the License.
 
 import eventlet
-import swiftclient
-
-from keystoneclient.exceptions import ClientException as KSClientException
-
 from fakes import FakeKSClient
 from fakes import FakeKSTenant
 from fakes import FakeKSUser
 from fakes import FakeSWConnection
-
-from tests.units import base
+from keystoneclient.exceptions import ClientException as KSClientException
+import swiftclient
 
 from swsync import filler
 from swsync import utils
+from tests.units import base
 
 
 class TestFiller(base.TestCase):

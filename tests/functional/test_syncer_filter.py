@@ -24,12 +24,13 @@
 # In your config.ini file, you should uncomment the field tenant_filter_file
 # and specify a path to a file where you're allowed to read and write.
 
-import eventlet
 import random
 import unittest
 
+import eventlet
 from keystoneclient.v2_0 import client as ksclient
 from swiftclient import client as sclient
+
 from swsync import accounts
 from swsync import filler
 from swsync.utils import get_config
@@ -65,19 +66,19 @@ class TestSyncer(unittest.TestCase):
             password=self.o_admin_password,
             tenant_name=self.o_admin_tenant)
         # Retreive admin (ResellerAdmin) token
-        (self.o_admin_auth_url, self.o_admin_token) = \
+        (self.o_admin_auth_url, self.o_admin_token) = (
             sclient.Connection(self.o_st,
                                "%s:%s" % (self.o_admin_tenant,
                                           self.o_admin_user),
                                self.o_admin_password,
-                               auth_version=2).get_auth()
+                               auth_version=2).get_auth())
         # Retreive admin (ResellerAdmin) token
-        (self.d_admin_auth_url, self.d_admin_token) = \
+        (self.d_admin_auth_url, self.d_admin_token) = (
             sclient.Connection(self.d_st,
                                "%s:%s" % (self.o_admin_tenant,
                                           self.o_admin_user),
                                self.o_admin_password,
-                               auth_version=2).get_auth()
+                               auth_version=2).get_auth())
         # Instanciate syncer
         self.swsync = accounts.Accounts()
 
@@ -90,15 +91,14 @@ class TestSyncer(unittest.TestCase):
             yield account, account_id, username
 
     def create_st_account_url(self, account_id):
-        o_account_url = \
-            self.o_admin_auth_url.split('AUTH_')[0] + 'AUTH_' + account_id
-        d_account_url = \
-            self.d_admin_auth_url.split('AUTH_')[0] + 'AUTH_' + account_id
+        o_account_url = (
+            self.o_admin_auth_url.split('AUTH_')[0] + 'AUTH_' + account_id)
+        d_account_url = (
+            self.d_admin_auth_url.split('AUTH_')[0] + 'AUTH_' + account_id)
         return o_account_url, d_account_url
 
     def verify_aco_diff(self, alo, ald):
-        """Verify that 2 accounts are similar to validate migration
-        """
+        """Verify that 2 accounts are similar to validate migration."""
         for k, v in alo[0].items():
             if k not in ('x-timestamp', 'x-trans-id',
                          'date', 'last-modified'):
@@ -206,8 +206,7 @@ class TestSyncer(unittest.TestCase):
                               http_conn=cnx)
 
     def test_01_sync_one_of_two_empty_accounts(self):
-        """create two empty accounts, Sync only one
-        """
+        """Create two empty accounts, Sync only one."""
         index = {}
 
         # create account
@@ -215,8 +214,8 @@ class TestSyncer(unittest.TestCase):
                                                    self.pile,
                                                    2, 1, index)
 
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
+        for account, account_id, username in (
+                self.extract_created_a_u_iter(self.created)):
 
             # post meta data on account
             tenant_cnx = sclient.Connection(self.o_st,
@@ -235,22 +234,22 @@ class TestSyncer(unittest.TestCase):
         self.swsync.process()
 
         # Now verify dest
-        for account, account_id, username in \
-                self.extract_created_a_u_iter(self.created):
-            alo = self.get_account_detail(account_id,
+        for account, account_id, username in (
+            self.extract_created_a_u_iter(self.created)):
+                alo = self.get_account_detail(account_id,
                                           self.o_admin_token, 'orig')
-            ald = self.get_account_detail(account_id,
+                ald = self.get_account_detail(account_id,
                                           self.d_admin_token, 'dest')
-            if account == t_account:
-                self.verify_aco_diff(alo, ald)
+                if account == t_account:
+                    self.verify_aco_diff(alo, ald)
 
     def tearDown(self):
         if self.created:
             for k, v in self.created.items():
                 user_info_list = [user[1] for user in v]
                 account_id = k[1]
-                o_account_url, d_account_url = \
-                    self.create_st_account_url(account_id)
+                o_account_url, d_account_url = (
+                    self.create_st_account_url(account_id))
                 # Remove account content on origin and destination
                 self.delete_account_cont(o_account_url, self.o_admin_token)
                 self.delete_account_cont(d_account_url, self.d_admin_token)

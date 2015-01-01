@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2013 eNovance SAS <licensing@enovance.com>
 #
-# Author: Chmouel Boudjnah <chmouel@enovance.com>
-#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -20,7 +18,6 @@ import urlparse
 import swiftclient
 
 import swsync.containers
-
 import tests.units.base as test_base
 import tests.units.fakes as fakes
 
@@ -391,12 +388,12 @@ class TestContainers(TestContainersBase):
         called_on_dest = []
 
         def get_container(*args, **kwargs):
-            #ORIG
+            # ORIG
             if len(called) == 0:
                 called.append("TESTED")
                 return ({}, [{'name': 'PARISESTMAGIQUE',
                               'last_modified': '2010'}])
-            #DEST
+            # DEST
             else:
                 called_on_dest.append("TESTED")
                 raise swiftclient.client.ClientException("TESTED")

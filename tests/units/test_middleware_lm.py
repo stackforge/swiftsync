@@ -20,6 +20,7 @@
 import unittest
 
 from middlewares import last_modified as middleware
+
 import swift.common.swob as swob
 
 

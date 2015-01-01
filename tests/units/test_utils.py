@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2013 eNovance SAS <licensing@enovance.com>
 #
-# Author: Chmouel Boudjnah <chmouel@enovance.com>
-#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -70,3 +68,6 @@ class TestAccount(test_base.TestCase):
         self.assertRaises(swsync.utils.ConfigurationError,
                           swsync.utils.get_config,
                           'foo', 'key', _config=cfg)
+
+    def test_reversed_option_default_false(self):
+        self.assertEqual(swsync.utils.REVERSE, False)
