@@ -34,7 +34,15 @@ class Main(object):
             dest='log_level',
             default='info',
             help='Number of containers to distribute objects among')
+        parser.add_option(
+            '-R', '--reverse',
+            action="store_true",
+            dest='reverse',
+            default=False,
+            help='Traverse container list forward or reversed')
         self.options, args = parser.parse_args()
+        if self.options:
+            swsync.utils.REVERSE = self.options.reverse
         if args:
             conf = swsync.utils.parse_ini(args[0])
         else:

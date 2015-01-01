@@ -18,10 +18,10 @@
 """Test base classes imported from ceilometer.
 """
 
-import unittest2
-
 import mox
 import stubout
+import unittest2
+
 from swsync import utils
 
 
