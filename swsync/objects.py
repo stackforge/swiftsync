@@ -15,6 +15,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 import logging
+import urllib
+import urllib2
 
 import eventlet
 import swift.common.bufferedhttp
@@ -24,10 +26,7 @@ try:
 except ImportError:
     # Nov2013: swift.common.utils now include a more generic object
     from swift.common.utils import FileLikeIter
-
 from swiftclient import client as swiftclient
-import urllib
-import urllib2
 
 
 def quote(value, safe='/'):

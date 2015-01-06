@@ -301,12 +301,12 @@ class TestAccountSync(TestAccountBase):
         self.accounts_cls.container_cls = Containers()
 
         def get_account(*args, **kwargs):
-            #ORIG
+            # ORIG
             if len(ret) == 0:
                 ret.append("TESTED")
                 return ({'x-account-container-count': 1},
                         [{'name': 'foo'}])
-            #DEST
+            # DEST
             else:
                 return ({'x-account-container-count': 2},
                         [{'name': 'foo', 'name': 'bar'}])
