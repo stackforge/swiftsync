@@ -24,8 +24,8 @@ import keystoneclient.v2_0.client
 import swiftclient
 
 import swsync.containers
-from utils import ConfigurationError
-from utils import get_config
+from swsync.utils import ConfigurationError
+from swsync.utils import get_config
 
 
 class Accounts(object):
@@ -55,10 +55,12 @@ class Accounts(object):
 
     def get_target_tenant_filter(self):
         """Returns a set of target tenants from the tenant_list_file.
+
         tenant_list_file is defined in the config file or given as a command
         line argument.
 
         If tenant_list_file is not defined, returns None (an empty filter).
+
         """
         try:
             tenant_filter_filename = get_config('sync', 'tenant_filter_file')
@@ -150,7 +152,7 @@ class Accounts(object):
 
             dt2 = datetime.datetime.fromtimestamp(time.time())
             rd = dateutil.relativedelta.relativedelta(dt2, dt1)
-            #TODO(chmou): use logging
+            # TODO(chmou): use logging
             logging.info("%s done: %d hours, %d minutes and %d seconds",
                          container['name'],
                          rd.hours,

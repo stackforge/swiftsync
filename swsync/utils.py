@@ -75,7 +75,7 @@ def get_config(section, option, default=None, _config=None):
                                  section)
     if CONFIG.has_option(section, option):
         return CONFIG.get(section, option)
-    elif not default is None:
+    elif default is not None:
         return default
     else:
         raise ConfigurationError("Invalid configuration, missing "
