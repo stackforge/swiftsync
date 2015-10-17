@@ -1,8 +1,0 @@
-simplejson
-http://tarballs.openstack.org/swift/swift-master.tar.gz#egg=swift
-python-swiftclient
-python-dateutil
-netifaces
-python-keystoneclient
-eventlet
-pastedeploy>=1.3.3
